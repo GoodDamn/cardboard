@@ -113,7 +113,7 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context) {
   jobject global_context = env->NewGlobalRef(context);
 
   cardboard::jni::initializeAndroid(vm, global_context);
-  cardboard::qrcode::initializeAndroid(vm, global_context);
+  //cardboard::qrcode::initializeAndroid(vm, global_context);
   cardboard::screen_params::initializeAndroid(vm, global_context);
   cardboard::DeviceParams::initializeAndroid(vm, global_context);
 

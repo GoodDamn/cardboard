@@ -15,8 +15,8 @@ android {
         // Vulkan        - Requires 24 or higher
         //
         // See the release notes for details.
-        minSdkVersion = 26
-        targetSdkVersion = 35
+        minSdkVersion 21
+        targetSdkVersion 35
         versionCode 1
         versionName "1.32.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'

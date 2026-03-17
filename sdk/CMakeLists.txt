@@ -22,8 +22,7 @@ add_compile_options(-Wall -Wextra)
 
 # If these are already defined, the existing value is used, rather than the default here.
 option(CARDBOARDSDK_RENDERING_GLESv3 "Enable rendering with GLESv3" ON)
-option(CARDBOARDSDK_RENDERING_VULKAN "Enable rendering with Vulkan" ON)
-option(CARDBOARDSDK_UNITY_PLUGIN "Enable use as a Unity plugin" ON)
+option(CARDBOARDSDK_RENDERING_VULKAN "Enable rendering with Vulkan" OFF)
 
 # Standard Android dependencies
 find_library(ANDROID_LIB android)
@@ -65,20 +64,6 @@ if(CARDBOARDSDK_RENDERING_VULKAN)
     file(GLOB rendering_vulkan_wrapper_srcs "rendering/android/vulkan/*.cc")
 endif()
 
-if(CARDBOARDSDK_UNITY_PLUGIN)
-    # === Cardboard Unity JNI ===
-    file(GLOB cardboard_unity_jni_srcs "unity/android/*.cc")
-
-    # === Cardboard Unity Wrapper ===
-    file(GLOB cardboard_xr_unity_srcs
-    "unity/xr_unity_plugin/*.cc"
-    "unity/xr_unity_plugin/vulkan/*.cc"
-    )
-
-    # === Cardboard XR Provider for Unity ===
-    file(GLOB cardboard_xr_provider_srcs "unity/xr_provider/*.cc")
-endif()
-
 # Output binary
 add_library(GfxPluginCardboard SHARED
     # Cardboard API sources.
@@ -95,19 +80,7 @@ add_library(GfxPluginCardboard SHARED
     # #vulkan This is required for Vulkan rendering. Remove the following two
     # lines if Vulkan rendering is not needed.
     ${rendering_vulkan_srcs}
-    ${rendering_vulkan_wrapper_srcs}
-    # Cardboard Unity JNI sources
-    ${cardboard_unity_jni_srcs}
-    # Cardboard Unity Wrapper sources
-    ${cardboard_xr_unity_srcs}
-    # Cardboard XR Provider for Unity sources
-    ${cardboard_xr_provider_srcs})
-
-if(CARDBOARDSDK_UNITY_PLUGIN)
-    # Includes
-    target_include_directories(GfxPluginCardboard
-        PRIVATE ../third_party/unity_plugin_api)
-endif()
+    ${rendering_vulkan_wrapper_srcs})
 
 if(CARDBOARDSDK_RENDERING_VULKAN)
     # #This is required for Vulkan rendering.
