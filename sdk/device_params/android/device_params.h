@@ -30,7 +30,7 @@ class DeviceParams {
  public:
   enum VerticalAlignmentType { BOTTOM = 0, CENTER = 1, TOP = 2 };
 
-  DeviceParams() : java_device_params_(nullptr) {}
+  DeviceParams() {}
   ~DeviceParams();
 
   // Initializes JavaVM and Android activity context.
@@ -54,8 +54,8 @@ class DeviceParams {
   int distortion_coefficients_size() const;
   float left_eye_field_of_view_angles(int index) const;
 
- private:
-  jobject java_device_params_;
+ /*private:
+  jobject java_device_params_;*/
 };
 
 }  // namespace cardboard

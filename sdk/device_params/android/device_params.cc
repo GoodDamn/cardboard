@@ -27,38 +27,38 @@ namespace cardboard {
 
 namespace {
 
-JavaVM* vm_;
+/*JavaVM* vm_;
 jobject context_;
-jclass device_params_utils_class_;
+jclass device_params_utils_class_;*/
 
 // TODO(b/180938531): Release this global reference.
 void LoadJNIResources(JNIEnv* env) {
-  device_params_utils_class_ =
+  /*device_params_utils_class_ =
       reinterpret_cast<jclass>(env->NewGlobalRef(jni::LoadJClass(
-          env, "com/google/cardboard/sdk/deviceparams/DeviceParamsUtils")));
+          env, "com/google/cardboard/sdk/deviceparams/DeviceParamsUtils")));*/
 }
 
 }  // anonymous namespace
 
 // TODO(b/181575962): Add C++ unit tests.
 DeviceParams::~DeviceParams() {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
-  env->DeleteGlobalRef(java_device_params_);
+  env->DeleteGlobalRef(java_device_params_);*/
 }
 
 void DeviceParams::initializeAndroid(JavaVM* vm, jobject context) {
-  vm_ = vm;
+  /*vm_ = vm;
   context_ = context;
 
   JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
-  LoadJNIResources(env);
+  LoadJNIResources(env);*/
 }
 
 void DeviceParams::ParseFromArray(const uint8_t* encoded_device_params,
                                   int size) {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jmethodID mid = env->GetStaticMethodID(
@@ -76,13 +76,13 @@ void DeviceParams::ParseFromArray(const uint8_t* encoded_device_params,
   if (java_device_params_ != nullptr) {
     env->DeleteGlobalRef(java_device_params_);
   }
-  java_device_params_ = env->NewGlobalRef(device_params_obj);
+  java_device_params_ = env->NewGlobalRef(device_params_obj);*/
 }
 
 // TODO(b/181658993): Check if JNI "execution + exception check" could be
 // wrapped within a reusable function or macro.
 float DeviceParams::screen_to_lens_distance() const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -96,12 +96,12 @@ float DeviceParams::screen_to_lens_distance() const {
         "Cannot retrieve ScreenToLensDistance from device parameters. Using "
         "Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1ScreenToLensDistance;
-  }
-  return screen_to_lens_distance;
+  }*/
+  return qrcode::kCardboardV1ScreenToLensDistance;
 }
 
 float DeviceParams::inter_lens_distance() const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -115,12 +115,13 @@ float DeviceParams::inter_lens_distance() const {
         "Cannot retrieve InterLensDistance from device parameters. Using "
         "Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1InterLensDistance;
-  }
-  return inter_lens_distance;
+  }*/
+
+  return qrcode::kCardboardV1InterLensDistance;
 }
 
 float DeviceParams::tray_to_lens_distance() const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -134,12 +135,12 @@ float DeviceParams::tray_to_lens_distance() const {
         "Cannot retrieve TrayToLensDistance from device parameters. Using "
         "Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1TrayToLensDistance;
-  }
-  return tray_to_lens_distance;
+  }*/
+  return qrcode::kCardboardV1TrayToLensDistance;
 }
 
 int DeviceParams::vertical_alignment() const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -161,12 +162,12 @@ int DeviceParams::vertical_alignment() const {
         "Cannot retrieve VerticalAlignmentType from device parameters. Using "
         "Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1VerticalAlignmentType;
-  }
-  return vertical_alignment_type;
+  }*/
+  return qrcode::kCardboardV1VerticalAlignmentType;
 }
 
 float DeviceParams::distortion_coefficients(int index) const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -180,12 +181,12 @@ float DeviceParams::distortion_coefficients(int index) const {
         "Cannot retrieve DistortionCoefficient from device parameters. Using "
         "Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1DistortionCoeffs[index];
-  }
-  return distortion_coefficient;
+  }*/
+  return qrcode::kCardboardV1DistortionCoeffs[index];
 }
 
 int DeviceParams::distortion_coefficients_size() const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -200,12 +201,12 @@ int DeviceParams::distortion_coefficients_size() const {
         "Cannot retrieve DistortionCoefficientsCount from device parameters. "
         "Using Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1DistortionCoeffsSize;
-  }
-  return distortion_coefficients_size;
+  }*/
+  return qrcode::kCardboardV1DistortionCoeffsSize;
 }
 
 float DeviceParams::left_eye_field_of_view_angles(int index) const {
-  JNIEnv* env;
+  /*JNIEnv* env;
   jni::LoadJNIEnv(vm_, &env);
 
   jclass cls = env->GetObjectClass(java_device_params_);
@@ -219,8 +220,8 @@ float DeviceParams::left_eye_field_of_view_angles(int index) const {
         "Cannot retrieve LeftEyeFieldOfViewAngle from device parameters. "
         "Using Cardboard Viewer v1 parameter.");
     return qrcode::kCardboardV1FovHalfDegrees[index];
-  }
-  return left_eye_field_of_view_angle;
+  }*/
+  return qrcode::kCardboardV1FovHalfDegrees[index];
 }
 
 }  // namespace cardboard

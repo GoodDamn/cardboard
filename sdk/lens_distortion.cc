@@ -37,8 +37,12 @@ struct LensDistortion::ViewportParams {
   float y_eye_offset;
 };
 
-LensDistortion::LensDistortion(const uint8_t* encoded_device_params, int size,
-                               int display_width, int display_height) {
+LensDistortion::LensDistortion(
+        const uint8_t* encoded_device_params,
+        int size,
+        int display_width,
+        int display_height
+) {
   device_params_.ParseFromArray(encoded_device_params, size);
 
   eye_from_head_matrix_[kLeft] = cardboard::Matrix4x4::Translation(

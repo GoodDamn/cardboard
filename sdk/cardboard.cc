@@ -331,7 +331,7 @@ void CardboardQrCode_getSavedDeviceParams(uint8_t** encoded_device_params,
     return;
   }
   std::vector<uint8_t> device_params =
-      cardboard::qrcode::getCurrentSavedDeviceParams();
+      cardboard::qrcode::getCardboardV1DeviceParams();
   if (device_params.empty()) {
     CARDBOARD_LOGD("No device parameters currently saved.");
     *size = 0;
