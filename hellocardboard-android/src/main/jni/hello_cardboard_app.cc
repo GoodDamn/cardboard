@@ -240,14 +240,7 @@ void HelloCardboardApp::OnResume() {
   uint8_t* buffer;
   int size;
   CardboardQrCode_getSavedDeviceParams(&buffer, &size);
-  if (size == 0) {
-    SwitchViewer();
-  }
   CardboardQrCode_destroy(buffer);
-}
-
-void HelloCardboardApp::SwitchViewer() {
-  CardboardQrCode_scanQrCodeAndSaveDeviceParams();
 }
 
 bool HelloCardboardApp::UpdateDeviceParams() {

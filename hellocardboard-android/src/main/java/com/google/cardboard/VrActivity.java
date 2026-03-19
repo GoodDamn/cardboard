@@ -48,7 +48,7 @@ import javax.microedition.khronos.opengles.GL10;
  */
 // TODO(b/184737638): Remove decorator once the AndroidX migration is completed.
 @SuppressWarnings("deprecation")
-public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
+public class VrActivity extends AppCompatActivity {
   static {
     System.loadLibrary("cardboard_jni");
   }
@@ -172,24 +172,6 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
     finish();
   }
 
-  /** Callback for when settings_menu button is pressed. */
-  public void showSettings(View view) {
-    PopupMenu popup = new PopupMenu(this, view);
-    MenuInflater inflater = popup.getMenuInflater();
-    inflater.inflate(R.menu.settings_menu, popup.getMenu());
-    popup.setOnMenuItemClickListener(this);
-    popup.show();
-  }
-
-  @Override
-  public boolean onMenuItemClick(MenuItem item) {
-    if (item.getItemId() == R.id.switch_viewer) {
-      nativeSwitchViewer(nativeApp);
-      return true;
-    }
-    return false;
-  }
-
   /**
    * Checks for READ_EXTERNAL_STORAGE permission.
    *
@@ -262,6 +244,4 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
   private native void nativeOnResume(long nativeApp);
 
   private native void nativeSetScreenParams(long nativeApp, int width, int height);
-
-  private native void nativeSwitchViewer(long nativeApp);
 }

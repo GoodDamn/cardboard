@@ -86,9 +86,4 @@ JNI_METHOD(void, nativeSetScreenParams)
   native(native_app)->SetScreenParams(width, height);
 }
 
-JNI_METHOD(void, nativeSwitchViewer)
-(JNIEnv* /*env*/, jobject /*obj*/, jlong native_app) {
-  native(native_app)->SwitchViewer();
-}
-
 }  // extern "C"

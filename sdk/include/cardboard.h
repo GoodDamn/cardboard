@@ -676,66 +676,6 @@ void CardboardQrCode_getSavedDeviceParams(uint8_t** encoded_device_params,
 ///     using cardboard_device.proto.
 void CardboardQrCode_destroy(const uint8_t* encoded_device_params);
 
-/// Saves the encoded device parameters provided by an URI.
-///
-/// @details This function obtains the encoded device parameters by parsing a
-///          URI string and then saves them.
-///
-///          Expected URI format for:
-///          - Cardboard Viewer v1: https://g.co/cardboard
-///          - Cardboard Viewer v2:
-///          https://google.com/cardboard/cfd?p=deviceParams (for example,
-///          https://google.com/cardboard/cfg?p=CgZHb29nbGUSEkNhcmRib2FyZCBJL08gMjAxNR0rGBU9JQHegj0qEAAASEIAAEhCAABIQgAASEJYADUpXA89OggeZnc-Ej6aPlAAYAM).
-///          Redirection is also supported up to a maximum of 5 possible
-///          redirects before reaching the proper pattern.
-///          This function only supports HTTPS connections. In case a URI
-///          containing an HTTP scheme is provided, it will be replaced by an
-///          HTTPS one.
-///          Upon termination, it will increment a counter that can be queried
-///          via @see CardboardQrCode_getDeviceParamsChangedCount() when new
-///          device parameters were successfully saved.
-///
-/// @pre @p uri Must not be null.
-/// @pre @p size Must be higher than 0.
-///
-/// @param[in]      uri                     UTF-8 URI string. See above for
-///                                         supported formats.
-/// @param[in]      size                    Size in bytes of @p uri
-void CardboardQrCode_saveDeviceParams(const uint8_t* uri, int size);
-
-/// Scans a QR code and saves the encoded device parameters.
-///
-/// @details Upon termination, it will increment a counter that can be queried
-///          via @c ::CardboardQrCode_getDeviceParamsChangedCount when new
-///          device parameters where successfully saved.
-void CardboardQrCode_scanQrCodeAndSaveDeviceParams();
-
-/// Gets the count of successful device parameters read and save operations.
-///
-/// @return The count of successful device parameters read and save operations.
-int CardboardQrCode_getDeviceParamsChangedCount();
-
-/// Gets Cardboard V1 device parameters.
-///
-/// @details This function does not use external storage, and stores into @p
-///          encoded_device_params the value of a pointer storing proto buffer.
-///          Users of this API should not free memory.
-///
-/// @pre @p encoded_device_params Must not be null.
-/// @pre @p size Must not be null.
-/// When it is unmet, a call to this function results in a no-op and default
-/// values are returned (empty values).
-/// Does not require a prior call to @c ::Cardboard_initializeAndroid in
-///       Android devices.
-///
-/// @param[out]     encoded_device_params   Reference to the device parameters.
-/// @param[out]     size                    Size in bytes of
-///                                         @p encoded_device_params.
-void CardboardQrCode_getCardboardV1DeviceParams(uint8_t** encoded_device_params,
-                                                int* size);
-
-/// @}
-
 #ifdef __cplusplus
 }
 #endif

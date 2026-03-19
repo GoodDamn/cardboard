@@ -20,7 +20,6 @@
 #include "distortion_renderer.h"
 #include "head_tracker.h"
 #include "lens_distortion.h"
-#include "qr_code.h"
 #include "qrcode/cardboard_v1/cardboard_v1.h"
 #include "screen_params.h"
 #include "util/is_arg_null.h"
@@ -113,7 +112,6 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context) {
   jobject global_context = env->NewGlobalRef(context);
 
   cardboard::jni::initializeAndroid(vm, global_context);
-  cardboard::qrcode::initializeAndroid(vm, global_context);
   cardboard::screen_params::initializeAndroid(vm, global_context);
 
   cardboard::util::SetIsInitialized();
@@ -348,46 +346,6 @@ void CardboardQrCode_destroy(const uint8_t* encoded_device_params) {
     return;
   }
   delete[] encoded_device_params;
-}
-
-void CardboardQrCode_saveDeviceParams(const uint8_t* uri, int size) {
-  if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(uri)) {
-    return;
-  }
-  if (size <= 0) {
-    CARDBOARD_LOGE(
-        "[%s : %d] Argument size is not valid. It must be higher than zero.",
-        __FILE__, __LINE__);
-    return;
-  }
-  cardboard::qrcode::saveDeviceParams(uri, size);
-}
-
-void CardboardQrCode_scanQrCodeAndSaveDeviceParams() {
-  if (CARDBOARD_IS_NOT_INITIALIZED()) {
-    return;
-  }
-  cardboard::qrcode::scanQrCodeAndSaveDeviceParams();
-}
-
-int CardboardQrCode_getDeviceParamsChangedCount() {
-  if (CARDBOARD_IS_NOT_INITIALIZED()) {
-    return 0;
-  }
-  return cardboard::qrcode::getDeviceParamsChangedCount();
-}
-
-void CardboardQrCode_getCardboardV1DeviceParams(uint8_t** encoded_device_params,
-                                                int* size) {
-  if (CARDBOARD_IS_ARG_NULL(encoded_device_params) ||
-      CARDBOARD_IS_ARG_NULL(size)) {
-    GetDefaultEncodedDeviceParams(encoded_device_params, size);
-    return;
-  }
-  static std::vector<uint8_t> cardboard_v1_device_param =
-      cardboard::qrcode::getCardboardV1DeviceParams();
-  *encoded_device_params = cardboard_v1_device_param.data();
-  *size = static_cast<int>(cardboard_v1_device_param.size());
 }
 
 }  // extern "C"

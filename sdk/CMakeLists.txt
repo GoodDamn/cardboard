@@ -49,8 +49,6 @@ file(GLOB sensors_android_srcs "sensors/android/*.cc")
 file(GLOB jni_util_srcs "jni_utils/android/*.cc")
 # Util Sources
 file(GLOB util_srcs "util/*.cc")
-# QR Code Sources
-file(GLOB qrcode_srcs "qrcode/android/*.cc")
 # Screen Params Sources
 file(GLOB screen_params_srcs "screen_params/android/*.cc")
 # Device Params Sources
@@ -73,7 +71,6 @@ add_library(GfxPluginCardboard SHARED
     ${sensors_android_srcs}
     ${jni_util_srcs}
     ${util_srcs}
-    ${qrcode_srcs}
     ${screen_params_srcs}
     ${device_params_srcs}
     ${rendering_opengl_srcs}

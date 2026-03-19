@@ -35,19 +35,4 @@
         android:layout_alignParentBottom="true"
         android:background="@color/alignment_marker_color">
     </RelativeLayout>
-
-    <FrameLayout
-        android:id="@+id/ui_settings_button_holder"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_width="42dp"
-        android:layout_height="42dp">
-        <ImageButton
-            style="@style/UiButton"
-            android:id="@+id/ui_settings_button"
-            android:contentDescription="settings"
-            android:src="@drawable/cardboard_oss_quantum_ic_settings_white_24"
-            android:layout_gravity="end|top"
-            android:onClick="showSettings"/>
-    </FrameLayout>
 </RelativeLayout>
