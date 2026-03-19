@@ -34,8 +34,10 @@ namespace cardboard {
 
 class LensDistortion {
  public:
-  LensDistortion(const uint8_t* encoded_device_params, int size,
-                 int display_width, int display_height);
+  LensDistortion(
+    float screenWidthMeters,
+    float screenHeightMeters
+  );
   // Tan angle units. "DistortedUvForUndistoredUv" goes through the forward
   // distort function. I.e. the lens. UndistortedUvForDistortedUv uses the
   // inverse distort function.

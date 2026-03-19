@@ -52,6 +52,8 @@ constexpr float kAngleLimit = 0.2f;
 // Number of different possible targets
 constexpr int kTargetMeshCount = 3;
 
+constexpr float kMetersPerInch = 0.0254f;
+
 // Simple shaders to render .obj files without any lighting.
 constexpr const char* kObjVertexShader =
     R"glsl(
@@ -166,10 +168,17 @@ void HelloCardboardApp::OnSurfaceCreated(JNIEnv* env) {
   CHECKGLERROR("OnSurfaceCreated");
 }
 
-void HelloCardboardApp::SetScreenParams(int width, int height) {
-  screen_width_ = width;
-  screen_height_ = height;
-  screen_params_changed_ = true;
+void HelloCardboardApp::SetScreenParams(
+    int width,
+    int height,
+    float xdpi,
+    float ydpi
+) {
+    screen_width_ = width;
+    screen_height_ = height;
+    mScreenWidthMeters = (static_cast<float>(width) / xdpi) * kMetersPerInch;
+    mScreenHeightMeters = (static_cast<float>(height) / ydpi) * kMetersPerInch;
+    screen_params_changed_ = true;
 }
 
 void HelloCardboardApp::OnDrawFrame() {
@@ -260,8 +269,11 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   }
 
   CardboardLensDistortion_destroy(lens_distortion_);
-  lens_distortion_ = CardboardLensDistortion_create(buffer, size, screen_width_,
-                                                    screen_height_);
+  lens_distortion_ = CardboardLensDistortion_create(
+          buffer,
+          mScreenWidthMeters,
+          mScreenHeightMeters
+  );
 
   CardboardQrCode_destroy(buffer);
 

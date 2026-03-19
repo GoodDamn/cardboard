@@ -27,6 +27,8 @@ import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.provider.Settings;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -63,12 +65,21 @@ public class VrActivity extends AppCompatActivity {
 
   private GLSurfaceView glView;
 
+  private float mDpiX = 0f;
+  private float mDpiY = 0f;
+
   @SuppressLint("ClickableViewAccessibility")
   @Override
   public void onCreate(Bundle savedInstance) {
     super.onCreate(savedInstance);
 
     nativeApp = nativeOnCreate(getAssets());
+
+    @NonNull DisplayMetrics metrics = getResources()
+            .getDisplayMetrics();
+
+    mDpiX = metrics.xdpi;
+    mDpiY = metrics.ydpi;
 
     setContentView(R.layout.activity_vr);
     glView = findViewById(R.id.surface_view);
@@ -154,7 +165,7 @@ public class VrActivity extends AppCompatActivity {
 
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
-      nativeSetScreenParams(nativeApp, width, height);
+      nativeSetScreenParams(nativeApp, width, height, mDpiX, mDpiY);
     }
 
     @Override
@@ -240,5 +251,11 @@ public class VrActivity extends AppCompatActivity {
 
   private native void nativeOnResume(long nativeApp);
 
-  private native void nativeSetScreenParams(long nativeApp, int width, int height);
+  private native void nativeSetScreenParams(
+          long nativeApp,
+          int width,
+          int height,
+          float xdpi,
+          float ydpi
+  );
 }

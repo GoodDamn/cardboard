@@ -82,8 +82,16 @@ JNI_METHOD(void, nativeOnResume)
 }
 
 JNI_METHOD(void, nativeSetScreenParams)
-(JNIEnv* /*env*/, jobject /*obj*/, jlong native_app, jint width, jint height) {
-  native(native_app)->SetScreenParams(width, height);
+(JNIEnv* /*env*/, jobject /*obj*/,
+        jlong native_app,
+        jint width,
+        jint height,
+        jfloat xdpi,
+        jfloat ydpi
+) {
+  native(native_app)->SetScreenParams(
+          width, height, xdpi, ydpi
+          );
 }
 
 }  // extern "C"

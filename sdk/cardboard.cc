@@ -20,7 +20,6 @@
 #include "distortion_renderer.h"
 #include "head_tracker.h"
 #include "lens_distortion.h"
-#include "screen_params.h"
 #include "util/is_arg_null.h"
 #include "util/is_initialized.h"
 #include "util/logging.h"
@@ -121,22 +120,26 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context) {
   jobject global_context = env->NewGlobalRef(context);
 
   cardboard::jni::initializeAndroid(vm, global_context);
-  cardboard::screen_params::initializeAndroid(vm, global_context);
 
   cardboard::util::SetIsInitialized();
 }
 #endif
 
 CardboardLensDistortion* CardboardLensDistortion_create(
-    const uint8_t* encoded_device_params, int size, int display_width,
-    int display_height) {
+    const uint8_t* encoded_device_params,
+    float screenWidthMeters,
+    float screenHeightMeters
+) {
   if (CARDBOARD_IS_NOT_INITIALIZED() ||
       CARDBOARD_IS_ARG_NULL(encoded_device_params)) {
     return nullptr;
   }
   return reinterpret_cast<CardboardLensDistortion*>(
-      new cardboard::LensDistortion(encoded_device_params, size, display_width,
-                                    display_height));
+      new cardboard::LensDistortion(
+              screenWidthMeters,
+              screenHeightMeters
+      )
+  );
 }
 
 void CardboardLensDistortion_destroy(CardboardLensDistortion* lens_distortion) {

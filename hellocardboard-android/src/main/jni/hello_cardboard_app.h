@@ -62,7 +62,12 @@ class HelloCardboardApp {
    * @param width Screen width
    * @param height Screen height
    */
-  void SetScreenParams(int width, int height);
+  void SetScreenParams(
+    int width,
+    int height,
+    float xdpi,
+    float ydpi
+  );
 
   /**
    * Draws the scene. This should be called on the rendering thread.
@@ -167,6 +172,8 @@ class HelloCardboardApp {
   bool device_params_changed_;
   int screen_width_;
   int screen_height_;
+  float mScreenWidthMeters;
+  float mScreenHeightMeters;
 
   float projection_matrices_[2][16];
   float eye_matrices_[2][16];

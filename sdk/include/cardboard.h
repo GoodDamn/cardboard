@@ -320,8 +320,10 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context);
 /// @param[in]      display_height          Size in pixels of display height.
 /// @return         Lens distortion object pointer.
 CardboardLensDistortion* CardboardLensDistortion_create(
-    const uint8_t* encoded_device_params, int size, int display_width,
-    int display_height);
+        const uint8_t* encoded_device_params,
+        float screenWidthMeters,
+        float screenHeightMeters
+);
 
 /// Destroys and releases memory used by the provided lens distortion object.
 ///

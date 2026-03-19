@@ -23,7 +23,6 @@
 #include <vector>
 
 #include "include/cardboard.h"
-#include "screen_params.h"
 
 namespace cardboard {
 
@@ -38,10 +37,12 @@ namespace cardboard {
     };
 
     LensDistortion::LensDistortion(
-        const uint8_t* encoded_device_params,
-        int size,
-        int display_width,
-        int display_height
+        float screenWidthMeters,
+        float screenHeightMeters
+    ): screen_width_meters_(
+            screenWidthMeters
+    ), screen_height_meters_(
+            screenHeightMeters
     ) {
       eye_from_head_matrix_[kLeft] = cardboard::Matrix4x4::Translation(
           device_params_.inter_lens_distance() * 0.5f, 0.f, 0.f);
@@ -57,9 +58,6 @@ namespace cardboard {
       distortion_ = std::unique_ptr<PolynomialRadialDistortion>(
           new PolynomialRadialDistortion(distortion_coefficients));
 
-      screen_params::getScreenSizeInMeters(display_width, display_height,
-                                           &screen_width_meters_,
-                                           &screen_height_meters_);
       UpdateParams();
     }
 
