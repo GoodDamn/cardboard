@@ -47,7 +47,6 @@ import javax.microedition.khronos.opengles.GL10;
  * rendering.
  */
 // TODO(b/184737638): Remove decorator once the AndroidX migration is completed.
-@SuppressWarnings("deprecation")
 public class VrActivity extends AppCompatActivity {
   static {
     System.loadLibrary("cardboard_jni");
@@ -82,9 +81,7 @@ public class VrActivity extends AppCompatActivity {
           if (event.getAction() == MotionEvent.ACTION_DOWN) {
             // Signal a trigger event.
             glView.queueEvent(
-                () -> {
-                  nativeOnTriggerEvent(nativeApp);
-                });
+                () -> nativeOnTriggerEvent(nativeApp));
             return true;
           }
           return false;
@@ -102,9 +99,9 @@ public class VrActivity extends AppCompatActivity {
         });
 
     // Forces screen to max brightness.
-    WindowManager.LayoutParams layout = getWindow().getAttributes();
-    layout.screenBrightness = 1.f;
-    getWindow().setAttributes(layout);
+    //WindowManager.LayoutParams layout = getWindow().getAttributes();
+    //layout.screenBrightness = 1.f;
+    //getWindow().setAttributes(layout);
 
     // Prevents screen from dimming/locking.
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
