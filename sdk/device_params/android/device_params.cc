@@ -20,39 +20,48 @@
 #include <cstdint>
 
 #include "jni_utils/android/jni_utils.h"
-#include "qrcode/cardboard_v1/cardboard_v1.h"
 #include "util/logging.h"
 
 namespace cardboard {
 
+    constexpr float kCardboardV1InterLensDistance = 0.06f;
+    constexpr float kCardboardV1TrayToLensDistance = 0.035f;
+    constexpr float kCardboardV1ScreenToLensDistance = 0.042f;
+    constexpr float kCardboardV1FovHalfDegrees[] = {40.0f, 40.0f, 40.0f, 40.0f};
+    constexpr float kCardboardV1DistortionCoeffs[] = {0.441f, 0.156f};
+    constexpr int kCardboardV1DistortionCoeffsSize = 2;
+    constexpr int kCardboardV1VerticalAlignmentType = 0;
+    constexpr char kCardboardV1Vendor[] = "Google, Inc.";
+    constexpr char kCardboardV1Model[] = "Cardboard v1";
+
 // TODO(b/181658993): Check if JNI "execution + exception check" could be
 // wrapped within a reusable function or macro.
     float DeviceParams::screen_to_lens_distance() const {
-      return qrcode::kCardboardV1ScreenToLensDistance;
+      return kCardboardV1ScreenToLensDistance;
     }
 
     float DeviceParams::inter_lens_distance() const {
-      return qrcode::kCardboardV1InterLensDistance;
+      return kCardboardV1InterLensDistance;
     }
 
     float DeviceParams::tray_to_lens_distance() const {
-      return qrcode::kCardboardV1TrayToLensDistance;
+      return kCardboardV1TrayToLensDistance;
     }
 
     int DeviceParams::vertical_alignment() const {
-      return qrcode::kCardboardV1VerticalAlignmentType;
+      return kCardboardV1VerticalAlignmentType;
     }
 
     float DeviceParams::distortion_coefficients(int index) const {
-      return qrcode::kCardboardV1DistortionCoeffs[index];
+      return kCardboardV1DistortionCoeffs[index];
     }
 
     int DeviceParams::distortion_coefficients_size() const {
-      return qrcode::kCardboardV1DistortionCoeffsSize;
+      return kCardboardV1DistortionCoeffsSize;
     }
 
     float DeviceParams::left_eye_field_of_view_angles(int index) const {
-      return qrcode::kCardboardV1FovHalfDegrees[index];
+      return kCardboardV1FovHalfDegrees[index];
     }
 
 }  // namespace cardboard

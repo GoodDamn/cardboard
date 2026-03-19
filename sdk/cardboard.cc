@@ -20,7 +20,6 @@
 #include "distortion_renderer.h"
 #include "head_tracker.h"
 #include "lens_distortion.h"
-#include "qrcode/cardboard_v1/cardboard_v1.h"
 #include "screen_params.h"
 #include "util/is_arg_null.h"
 #include "util/is_initialized.h"
@@ -36,6 +35,16 @@ struct CardboardDistortionRenderer : cardboard::DistortionRenderer {};
 struct CardboardHeadTracker : cardboard::HeadTracker {};
 
 namespace {
+
+    std::vector<uint8_t> mDeviceParams = {
+            0xa,  0xc,  0x47, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2c, 0x20, 0x49,
+            0x6e, 0x63, 0x2e, 0x12, 0xc,  0x43, 0x61, 0x72, 0x64, 0x62, 0x6f,
+            0x61, 0x72, 0x64, 0x20, 0x76, 0x31, 0x1d, 0x31, 0x8,  0x2c, 0x3d,
+            0x25, 0x8f, 0xc2, 0x75, 0x3d, 0x2a, 0x10, 0x0,  0x0,  0x20, 0x42,
+            0x0,  0x0,  0x20, 0x42, 0x0,  0x0,  0x20, 0x42, 0x0,  0x0,  0x20,
+            0x42, 0x35, 0x29, 0x5c, 0xf,  0x3d, 0x3a, 0x8,  0xc1, 0xca, 0xe1,
+            0x3e, 0x77, 0xbe, 0x1f, 0x3e, 0x58, 0x0,  0x60, 0x1,
+    };
 
 // Return default (identity) matrix.
 void GetDefaultMatrix(float* matrix) {
@@ -327,17 +336,9 @@ void CardboardQrCode_getSavedDeviceParams(uint8_t** encoded_device_params,
     GetDefaultEncodedDeviceParams(encoded_device_params, size);
     return;
   }
-  std::vector<uint8_t> device_params =
-      cardboard::qrcode::getCardboardV1DeviceParams();
-  if (device_params.empty()) {
-    CARDBOARD_LOGD("No device parameters currently saved.");
-    *size = 0;
-    *encoded_device_params = nullptr;
-    return;
-  }
-  *size = static_cast<int>(device_params.size());
+  *size = static_cast<int>(mDeviceParams.size());
   *encoded_device_params = new uint8_t[*size];
-  memcpy(*encoded_device_params, &device_params[0], *size);
+  memcpy(*encoded_device_params, &mDeviceParams[0], *size);
 }
 
 void CardboardQrCode_destroy(const uint8_t* encoded_device_params) {

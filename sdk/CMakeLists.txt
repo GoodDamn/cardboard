@@ -38,8 +38,6 @@ endif()
 include_directories(.)
 
 # === Cardboard API ===
-# Cardboard V1 sources
-file(GLOB cardboard_v1_srcs "qrcode/cardboard_v1/*.cc")
 # General Sources
 file(GLOB general_srcs "*.cc")
 # Sensors Sources
@@ -65,7 +63,6 @@ endif()
 # Output binary
 add_library(GfxPluginCardboard SHARED
     # Cardboard API sources.
-    ${cardboard_v1_srcs}
     ${general_srcs}
     ${sensors_srcs}
     ${sensors_android_srcs}
