@@ -312,15 +312,10 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context);
 /// When it is unmet, a call to this function results in a no-op and returns a
 /// @c nullptr.
 ///
-/// @param[in]      encoded_device_params   The device parameters serialized
-///     using cardboard_device.proto.
-/// @param[in]      size                    Size in bytes of
-///     @c encoded_device_params.
 /// @param[in]      display_width           Size in pixels of display width.
 /// @param[in]      display_height          Size in pixels of display height.
 /// @return         Lens distortion object pointer.
 CardboardLensDistortion* CardboardLensDistortion_create(
-        const uint8_t* encoded_device_params,
         float screenWidthMeters,
         float screenHeightMeters
 );
@@ -439,14 +434,6 @@ CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
 /// Important: This module functions must be called from the render thread.
 /// @{
 
-/// Creates a new distortion renderer object. It uses OpenGL ES 2.0 as the
-/// rendering API. Must be called from the render thread.
-///
-/// @param[in]      config                  Distortion renderer configuration.
-/// @return         Distortion renderer object pointer
-CardboardDistortionRenderer* CardboardOpenGlEs2DistortionRenderer_create(
-    const CardboardOpenGlEsDistortionRendererConfig* config);
-
 /// Creates a new distortion renderer object. It uses OpenGL ES 3.0 as the
 /// rendering API. Must be called from the render thread.
 ///
@@ -454,14 +441,6 @@ CardboardDistortionRenderer* CardboardOpenGlEs2DistortionRenderer_create(
 /// @return         Distortion renderer object pointer
 CardboardDistortionRenderer* CardboardOpenGlEs3DistortionRenderer_create(
     const CardboardOpenGlEsDistortionRendererConfig* config);
-
-/// Creates a new distortion renderer object. It uses Metal as the rendering
-/// API. Must be called from the render thread.
-///
-/// @param[in]      config                  Distortion renderer configuration.
-/// @return         Distortion renderer object pointer
-CardboardDistortionRenderer* CardboardMetalDistortionRenderer_create(
-    const CardboardMetalDistortionRendererConfig* config);
 
 /// Creates a new distortion renderer object. It uses Vulkan as the rendering
 /// API. Must be called from the render thread.
@@ -642,41 +621,6 @@ void CardboardHeadTracker_recenter(CardboardHeadTracker* head_tracker);
 /// of the head tracker.
 void CardboardHeadTracker_setLowPassFilter(CardboardHeadTracker* head_tracker,
                                            int cutoff_frequency);
-
-/// @}
-
-/////////////////////////////////////////////////////////////////////////////
-// QR Code Scanner
-/////////////////////////////////////////////////////////////////////////////
-/// @defgroup qrcode-scanner QR Code Scanner
-/// @brief This module manages the entire process of capturing, decoding and
-///     getting the device parameters from a QR code. It also saves and loads
-///     the device parameters to and from the external storage.
-/// @{
-
-/// Gets currently saved devices parameters. This function allocates memory for
-/// the parameters, so it must be released using @c ::CardboardQrCode_destroy.
-///
-/// @pre @p encoded_device_params Must not be null.
-/// @pre @p size Must not be null.
-/// When it is unmet, a call to this function results in a no-op and default
-/// values are returned (empty values).
-///
-/// @param[out]     encoded_device_params   Reference to the device parameters
-///     serialized using cardboard_device.proto.
-/// @param[out]     size                    Size in bytes of
-///     encoded_device_params.
-void CardboardQrCode_getSavedDeviceParams(uint8_t** encoded_device_params,
-                                          int* size);
-
-/// Releases memory used by the provided encoded_device_params array.
-///
-/// @pre @p encoded_device_params Must not be null.
-/// When it is unmet, a call to this function results in a no-op.
-///
-/// @param[in]      encoded_device_params   The device parameters serialized
-///     using cardboard_device.proto.
-void CardboardQrCode_destroy(const uint8_t* encoded_device_params);
 
 #ifdef __cplusplus
 }

@@ -243,13 +243,6 @@ void HelloCardboardApp::OnResume() {
 
   // Parameters may have changed.
   device_params_changed_ = true;
-
-  // Check for device parameters existence in external storage. If they're
-  // missing, we must scan a Cardboard QR code and save the obtained parameters.
-  uint8_t* buffer;
-  int size;
-  CardboardQrCode_getSavedDeviceParams(&buffer, &size);
-  CardboardQrCode_destroy(buffer);
 }
 
 bool HelloCardboardApp::UpdateDeviceParams() {
@@ -258,24 +251,11 @@ bool HelloCardboardApp::UpdateDeviceParams() {
     return true;
   }
 
-  // Get saved device parameters
-  uint8_t* buffer;
-  int size;
-  CardboardQrCode_getSavedDeviceParams(&buffer, &size);
-
-  // If there are no parameters saved yet, returns false.
-  if (size == 0) {
-    return false;
-  }
-
   CardboardLensDistortion_destroy(lens_distortion_);
   lens_distortion_ = CardboardLensDistortion_create(
-          buffer,
           mScreenWidthMeters,
           mScreenHeightMeters
   );
-
-  CardboardQrCode_destroy(buffer);
 
   GlSetup();
 

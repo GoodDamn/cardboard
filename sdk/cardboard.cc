@@ -77,16 +77,6 @@ void GetDefaultDistortionMesh(CardboardMesh* mesh) {
   }
 }
 
-// Return default (empty) encoded device params.
-void GetDefaultEncodedDeviceParams(uint8_t** encoded_device_params, int* size) {
-  if (encoded_device_params != nullptr) {
-    *encoded_device_params = nullptr;
-  }
-  if (size != nullptr) {
-    *size = 0;
-  }
-}
-
 // Return default (zero) position.
 void GetDefaultPosition(float* position) {
   if (position != nullptr) {
@@ -126,12 +116,10 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context) {
 #endif
 
 CardboardLensDistortion* CardboardLensDistortion_create(
-    const uint8_t* encoded_device_params,
     float screenWidthMeters,
     float screenHeightMeters
 ) {
-  if (CARDBOARD_IS_NOT_INITIALIZED() ||
-      CARDBOARD_IS_ARG_NULL(encoded_device_params)) {
+  if (CARDBOARD_IS_NOT_INITIALIZED()) {
     return nullptr;
   }
   return reinterpret_cast<CardboardLensDistortion*>(
@@ -329,27 +317,6 @@ void CardboardHeadTracker_recenter(CardboardHeadTracker* head_tracker) {
     return;
   }
   static_cast<cardboard::HeadTracker*>(head_tracker)->Recenter();
-}
-
-void CardboardQrCode_getSavedDeviceParams(uint8_t** encoded_device_params,
-                                          int* size) {
-  if (CARDBOARD_IS_NOT_INITIALIZED() ||
-      CARDBOARD_IS_ARG_NULL(encoded_device_params) ||
-      CARDBOARD_IS_ARG_NULL(size)) {
-    GetDefaultEncodedDeviceParams(encoded_device_params, size);
-    return;
-  }
-  *size = static_cast<int>(mDeviceParams.size());
-  *encoded_device_params = new uint8_t[*size];
-  memcpy(*encoded_device_params, &mDeviceParams[0], *size);
-}
-
-void CardboardQrCode_destroy(const uint8_t* encoded_device_params) {
-  if (CARDBOARD_IS_NOT_INITIALIZED() ||
-      CARDBOARD_IS_ARG_NULL(encoded_device_params)) {
-    return;
-  }
-  delete[] encoded_device_params;
 }
 
 }  // extern "C"
