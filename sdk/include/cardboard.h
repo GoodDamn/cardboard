@@ -459,16 +459,9 @@ CardboardDistortionRenderer* CardboardVulkanDistortionRenderer_create(
 /// @param[in]      renderer                Distortion renderer object pointer.
 void CardboardDistortionRenderer_destroy(CardboardDistortionRenderer* renderer);
 
-/// Sets the distortion Mesh for a particular eye. Must be called from render
-/// thread.
-///
-/// @pre @p renderer Must not be null.
-/// @pre @p mesh Must not be null.
-/// When it is unmet, a call to this function results in a no-op.
-///
-/// @param[in]      renderer                Distortion renderer object pointer.
-/// @param[in]      mesh                    Distortion mesh.
-/// @param[in]      eye                     Desired eye.
+void CardboardDistortionRenderer_setMeshLeftEye(CardboardDistortionRenderer* renderer,
+                                         const CardboardMesh* mesh);
+
 void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
                                          const CardboardMesh* mesh,
                                          CardboardEye eye);
