@@ -40,11 +40,11 @@ android {
     }
     sourceSets {
         // Sets path to java, jni, resources files and manifest location as it is not the default one.
-        main {
+        /*main {
             manifest.srcFile 'qrcode/android/AndroidManifest.xml'
             java.srcDirs = ['qrcode/android/java', 'device_params/android/java', 'screen_params/android/java', 'java_utils/android/java']
             res.srcDirs = ['qrcode/android/res']
-        }
+        }*/
         // Adds proto file and generated source files
         main.java.srcDirs += "${protobuf.generatedFilesBaseDir}/main/javalite"
         main.proto.srcDirs = ["${project.rootDir}/proto"]
