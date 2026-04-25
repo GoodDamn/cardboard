@@ -26,7 +26,6 @@ option(CARDBOARDSDK_RENDERING_VULKAN "Enable rendering with Vulkan" OFF)
 
 # Standard Android dependencies
 find_library(ANDROID_LIB android)
-find_library(GLESv2_LIB GLESv2)
 find_library(LOG_LIB log)
 
 # #gles3 - Library is only needed if OpenGL ES 3.0 support is desired. Remove
@@ -103,15 +102,15 @@ if(CARDBOARDSDK_RENDERING_GLESv3)
     )
 endif()
 
-set_property(
-    TARGET GfxPluginCardboard
-    APPEND_STRING
-    PROPERTY
-        LINK_FLAGS
-        " -Wl,--version-script=\"${CMAKE_CURRENT_SOURCE_DIR}/cardboard_api.lds\""
-)
-set_property(
-    TARGET GfxPluginCardboard
-    APPEND
-    PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cardboard_api.lds"
-)
+#set_property(
+#    TARGET GfxPluginCardboard
+#    APPEND_STRING
+#    PROPERTY
+#        LINK_FLAGS
+#        " -Wl,--version-script=\"${CMAKE_CURRENT_SOURCE_DIR}/cardboard_api.lds\""
+#)
+#set_property(
+#    TARGET GfxPluginCardboard
+#    APPEND
+#    PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cardboard_api.lds"
+#)
