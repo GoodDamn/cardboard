@@ -82,32 +82,47 @@ namespace cardboard {
     }
 
     void LensDistortion::UpdateParams() {
-      fov_[kLeft] = CalculateFov(device_params_, *distortion_, screen_width_meters_,
-                                 screen_height_meters_);
+      fov_[kLeft] = CalculateFov(device_params_, *distortion_);
       // Mirror fov for right eye.
       fov_[kRight] = fov_[kLeft];
       fov_[kRight][0] = fov_[kLeft][1];
       fov_[kRight][1] = fov_[kLeft][0];
 
       left_mesh_ = std::unique_ptr<DistortionMesh>(
-          CreateDistortionMesh(kLeft, device_params_, *distortion_, fov_[kLeft],
-                               screen_width_meters_, screen_height_meters_));
+          CreateDistortionMesh(
+                  kLeft,
+                  device_params_,
+                  *distortion_,
+                  fov_[kLeft])
+          );
+
       right_mesh_ = std::unique_ptr<DistortionMesh>(
-          CreateDistortionMesh(kRight, device_params_, *distortion_, fov_[kRight],
-                               screen_width_meters_, screen_height_meters_));
+          CreateDistortionMesh(
+                  kRight,
+                  device_params_,
+                  *distortion_,
+                  fov_[kRight]
+          )
+      );
     }
 
     std::array<float, 2> LensDistortion::DistortedUvForUndistortedUv(
-        const std::array<float, 2>& in, CardboardEye eye) const {
+        std::array<float, 2>& in,
+        CardboardEye eye
+    ) {
       if (screen_width_meters_ == 0 || screen_height_meters_ == 0) {
         return {0, 0};
       }
 
       ViewportParams screen_params, texture_params;
 
-      CalculateViewportParameters(eye, device_params_, fov_[eye],
-                                  screen_width_meters_, screen_height_meters_,
-                                  &screen_params, &texture_params);
+      CalculateViewportParameters(
+              eye,
+              device_params_,
+              fov_[eye],
+              &screen_params,
+              &texture_params
+      );
 
       // Convert input from normalized [0, 1] screen coordinates to eye-centered
       // tanangle units.
@@ -127,16 +142,21 @@ namespace cardboard {
     }
 
     std::array<float, 2> LensDistortion::UndistortedUvForDistortedUv(
-        const std::array<float, 2>& in, CardboardEye eye) const {
+        std::array<float, 2>& in,
+        CardboardEye eye
+    ) {
       if (screen_width_meters_ == 0 || screen_height_meters_ == 0) {
         return {0, 0};
       }
 
       ViewportParams screen_params, texture_params;
 
-      CalculateViewportParameters(eye, device_params_, fov_[eye],
-                                  screen_width_meters_, screen_height_meters_,
-                                  &screen_params, &texture_params);
+      CalculateViewportParameters(
+              eye, device_params_,
+              fov_[eye],
+              &screen_params,
+              &texture_params
+      );
 
       // Convert input from normalized [0, 1] pre distort texture space to
       // eye-centered tanangle units.
@@ -155,9 +175,9 @@ namespace cardboard {
     }
 
     std::array<float, 4> LensDistortion::CalculateFov(
-        const DeviceParams& device_params,
-        const PolynomialRadialDistortion& distortion, float screen_width_meters,
-        float screen_height_meters) {
+        DeviceParams& device_params,
+        PolynomialRadialDistortion& distortion
+    ) {
       // FOV angles in device parameters are in degrees so they are converted
       // to radians for posterior use.
       std::array<float, 4> device_fov = {
@@ -169,11 +189,11 @@ namespace cardboard {
 
       const float eye_to_screen_distance = device_params.screen_to_lens_distance();
       const float outer_distance =
-          (screen_width_meters - device_params.inter_lens_distance()) / 2.0f;
+          (screen_width_meters_ - device_params.inter_lens_distance()) / 2.0f;
       const float inner_distance = device_params.inter_lens_distance() / 2.0f;
       const float bottom_distance =
-          GetYEyeOffsetMeters(device_params, screen_height_meters);
-      const float top_distance = screen_height_meters - bottom_distance;
+          GetYEyeOffsetMeters(device_params);
+      const float top_distance = screen_height_meters_ - bottom_distance;
 
       const float outer_angle =
           atan(distortion.Distort({outer_distance / eye_to_screen_distance, 0})[0]);
@@ -192,56 +212,70 @@ namespace cardboard {
       };
     }
 
-    float LensDistortion::GetYEyeOffsetMeters(const DeviceParams& device_params,
-                                              float screen_height_meters) {
+    float LensDistortion::GetYEyeOffsetMeters(
+        const DeviceParams& device_params
+    ) {
       switch (device_params.vertical_alignment()) {
         case DeviceParams::CENTER:
         default:
-          return screen_height_meters / 2.0f;
+          return screen_height_meters_ / 2.0f;
         case DeviceParams::BOTTOM:
           return device_params.tray_to_lens_distance() - kDefaultBorderSizeMeters;
         case DeviceParams::TOP:
-          return screen_height_meters - device_params.tray_to_lens_distance() -
+          return screen_height_meters_ - device_params.tray_to_lens_distance() -
                  kDefaultBorderSizeMeters;
       }
     }
 
     DistortionMesh* LensDistortion::CreateDistortionMesh(
-        CardboardEye eye, const DeviceParams& device_params,
-        const PolynomialRadialDistortion& distortion,
-        const std::array<float, 4>& fov, float screen_width_meters,
-        float screen_height_meters) {
+        CardboardEye eye,
+        DeviceParams& device_params,
+        PolynomialRadialDistortion& distortion,
+        std::array<float, 4>& fov
+    ) {
       ViewportParams screen_params, texture_params;
 
-      CalculateViewportParameters(eye, device_params, fov, screen_width_meters,
-                                  screen_height_meters, &screen_params,
-                                  &texture_params);
+      CalculateViewportParameters(
+              eye,
+              device_params,
+              fov,
+              &screen_params,
+              &texture_params
+      );
 
-      return new DistortionMesh(distortion, screen_params.width,
-                                screen_params.height, screen_params.x_eye_offset,
-                                screen_params.y_eye_offset, texture_params.width,
-                                texture_params.height, texture_params.x_eye_offset,
-                                texture_params.y_eye_offset);
+      return new DistortionMesh(
+              distortion,
+              screen_params.width,
+              screen_params.height,
+              screen_params.x_eye_offset,
+              screen_params.y_eye_offset,
+              texture_params.width,
+              texture_params.height,
+              texture_params.x_eye_offset,
+              texture_params.y_eye_offset
+      );
     }
 
     void LensDistortion::CalculateViewportParameters(
-        CardboardEye eye, const DeviceParams& device_params,
-        const std::array<float, 4>& fov, float screen_width_meters,
-        float screen_height_meters, ViewportParams* screen_params,
-        ViewportParams* texture_params) {
+        CardboardEye eye,
+        DeviceParams& device_params,
+        std::array<float, 4>& fov,
+        ViewportParams* screen_params,
+        ViewportParams* texture_params
+    ) {
       screen_params->width =
-          screen_width_meters / device_params.screen_to_lens_distance();
+          screen_width_meters_ / device_params.screen_to_lens_distance();
       screen_params->height =
-          screen_height_meters / device_params.screen_to_lens_distance();
+          screen_height_meters_ / device_params.screen_to_lens_distance();
 
       screen_params->x_eye_offset =
           eye == kLeft
-              ? ((screen_width_meters - device_params.inter_lens_distance()) / 2) /
+              ? ((screen_width_meters_ - device_params.inter_lens_distance()) / 2) /
                     device_params.screen_to_lens_distance()
-              : ((screen_width_meters + device_params.inter_lens_distance()) / 2) /
+              : ((screen_width_meters_ + device_params.inter_lens_distance()) / 2) /
                     device_params.screen_to_lens_distance();
       screen_params->y_eye_offset =
-          GetYEyeOffsetMeters(device_params, screen_height_meters) /
+          GetYEyeOffsetMeters(device_params) /
           device_params.screen_to_lens_distance();
 
       texture_params->width = tan(fov[0]) + tan(fov[1]);

@@ -42,9 +42,14 @@ class LensDistortion {
   // distort function. I.e. the lens. UndistortedUvForDistortedUv uses the
   // inverse distort function.
   std::array<float, 2> DistortedUvForUndistortedUv(
-      const std::array<float, 2>& in, CardboardEye eye) const;
+      std::array<float, 2>& in,
+      CardboardEye eye
+  );
+
   std::array<float, 2> UndistortedUvForDistortedUv(
-      const std::array<float, 2>& in, CardboardEye eye) const;
+      std::array<float, 2>& in,
+      CardboardEye eye
+  );
   void GetEyeFromHeadMatrix(CardboardEye eye,
                             float* eye_from_head_matrix) const;
   void GetEyeProjectionMatrix(CardboardEye eye, float z_near, float z_far,
@@ -55,24 +60,30 @@ class LensDistortion {
   struct ViewportParams;
 
   void UpdateParams();
-  static float GetYEyeOffsetMeters(const DeviceParams& device_params,
-                                   float screen_height_meters);
-  static DistortionMesh* CreateDistortionMesh(
-      CardboardEye eye, const cardboard::DeviceParams& device_params,
-      const cardboard::PolynomialRadialDistortion& distortion,
-      const std::array<float, 4>& fov, float screen_width_meters,
-      float screen_height_meters);
-  static std::array<float, 4> CalculateFov(
-      const cardboard::DeviceParams& device_params,
-      const cardboard::PolynomialRadialDistortion& distortion,
-      float screen_width_meters, float screen_height_meters);
-  static void CalculateViewportParameters(CardboardEye eye,
-                                          const DeviceParams& device_params,
-                                          const std::array<float, 4>& fov,
-                                          float screen_width_meters,
-                                          float screen_height_meters,
-                                          ViewportParams* screen_params,
-                                          ViewportParams* texture_params);
+  float GetYEyeOffsetMeters(
+    const DeviceParams& device_params
+  );
+
+  DistortionMesh* CreateDistortionMesh(
+      CardboardEye eye,
+      cardboard::DeviceParams& device_params,
+      cardboard::PolynomialRadialDistortion& distortion,
+      std::array<float, 4>& fov
+  );
+
+  std::array<float, 4> CalculateFov(
+      cardboard::DeviceParams& device_params,
+      cardboard::PolynomialRadialDistortion& distortion
+  );
+
+  void CalculateViewportParameters(
+          CardboardEye eye,
+          DeviceParams& device_params,
+          std::array<float, 4>& fov,
+          ViewportParams* screen_params,
+          ViewportParams* texture_params
+  );
+
   static constexpr float DegreesToRadians(float angle);
 
   DeviceParams device_params_;
