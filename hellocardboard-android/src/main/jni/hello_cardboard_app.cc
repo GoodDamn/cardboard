@@ -270,10 +270,6 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   CardboardLensDistortion_getDistortionMesh(lens_distortion_, kRight,
                                             &right_mesh);
 
-    CardboardDistortionRenderer_setMeshLeftEye(
-            distortion_renderer_,
-            &left_mesh
-    );
   CardboardDistortionRenderer_setMesh(distortion_renderer_, &left_mesh, kLeft);
   CardboardDistortionRenderer_setMesh(distortion_renderer_, &right_mesh, kRight);
 

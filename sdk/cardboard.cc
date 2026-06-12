@@ -227,13 +227,6 @@ void CardboardDistortionRenderer_destroy(
   delete renderer;
 }
 
-void CardboardDistortionRenderer_setMeshLeftEye(
-        CardboardDistortionRenderer* renderer,
-        const CardboardMesh* mesh
-) {
-
-}
-
 void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
                                          const CardboardMesh* mesh,
                                          CardboardEye eye) {

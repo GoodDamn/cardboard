@@ -459,9 +459,6 @@ CardboardDistortionRenderer* CardboardVulkanDistortionRenderer_create(
 /// @param[in]      renderer                Distortion renderer object pointer.
 void CardboardDistortionRenderer_destroy(CardboardDistortionRenderer* renderer);
 
-void CardboardDistortionRenderer_setMeshLeftEye(CardboardDistortionRenderer* renderer,
-                                         const CardboardMesh* mesh);
-
 void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
                                          const CardboardMesh* mesh,
                                          CardboardEye eye);
