@@ -68,43 +68,6 @@ namespace cardboard {
         UpdateParams();
     }
 
-    void LensDistortion::GetEyeFromHeadMatrix(
-            CardboardEye eye,
-            float *eye_from_head_matrix
-    ) const {
-        meshes_[eye].matrix.eye_from_head_matrix_.ToArray(
-            eye_from_head_matrix
-        );
-    }
-
-    void LensDistortion::GetEyeProjectionMatrix(
-            CardboardEye eye, float z_near, float z_far,
-            float *projection_matrix
-    ) const {
-        Matrix4x4::Perspective(
-            meshes_[eye].matrix.fov,
-            z_near,
-            z_far
-        ).ToArray(projection_matrix);
-    }
-
-    void LensDistortion::GetEyeFieldOfView(
-            CardboardEye eye,
-            float *field_of_view
-    ) const {
-        std::memcpy(
-            field_of_view,
-            meshes_[eye].matrix.fov.data(),
-            sizeof(float) * 4
-        );
-    }
-
-    CardboardMesh LensDistortion::GetDistortionMesh(
-        CardboardEye eye
-    ) const {
-        return meshes_[eye].mesh->GetMesh();
-    }
-
     void LensDistortion::UpdateParams() {
 
         meshes_[kLeft].matrix.fov = CalculateFov();

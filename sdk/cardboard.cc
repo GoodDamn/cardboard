@@ -40,8 +40,6 @@ struct CardboardHeadTracker : cardboard::HeadTracker {
 };
 
 namespace {
-    std::vector<cardboard::CBDistortionMesh> meshes;
-
     // Return default (identity) matrix.
     void GetDefaultMatrix(float *matrix) {
         if (matrix != nullptr) {
@@ -96,6 +94,7 @@ namespace {
 }  // anonymous namespace
 
 extern "C" {
+    std::vector<cardboard::CBDistortionMesh> meshes;
 
 #ifdef __ANDROID__
 void Cardboard_initializeAndroid(JavaVM *vm, jobject context) {
@@ -145,54 +144,72 @@ void CardboardLensDistortion_destroy(CardboardLensDistortion *lens_distortion) {
 }
 
 void CardboardLensDistortion_getEyeFromHeadMatrix(
-        CardboardLensDistortion *lens_distortion, CardboardEye eye,
-        float *eye_from_head_matrix) {
+        CardboardLensDistortion *lens_distortion,
+        CardboardEye eye,
+        float *eye_from_head_matrix
+) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
         CARDBOARD_IS_ARG_NULL(eye_from_head_matrix)) {
         GetDefaultMatrix(eye_from_head_matrix);
         return;
     }
-    static_cast<cardboard::LensDistortion *>(lens_distortion)
-            ->GetEyeFromHeadMatrix(eye, eye_from_head_matrix);
+
+    meshes[eye].matrix.getHeadMatrix(
+        eye_from_head_matrix
+    );
 }
 
 void CardboardLensDistortion_getProjectionMatrix(
-        CardboardLensDistortion *lens_distortion, CardboardEye eye, float z_near,
-        float z_far, float *projection_matrix) {
+        CardboardLensDistortion *lens_distortion,
+        CardboardEye eye,
+        float z_near,
+        float z_far,
+        float *projection_matrix
+) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
         CARDBOARD_IS_ARG_NULL(projection_matrix)) {
         GetDefaultMatrix(projection_matrix);
         return;
     }
-    static_cast<cardboard::LensDistortion *>(lens_distortion)
-            ->GetEyeProjectionMatrix(eye, z_near, z_far, projection_matrix);
+
+    meshes[eye].matrix.getProjectionMatrix(
+        z_near,
+        z_far,
+        projection_matrix
+    );
 }
 
 void CardboardLensDistortion_getFieldOfView(
-        CardboardLensDistortion *lens_distortion, CardboardEye eye,
-        float *field_of_view) {
+        CardboardLensDistortion *lens_distortion,
+        CardboardEye eye,
+        float *field_of_view
+) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
         CARDBOARD_IS_ARG_NULL(field_of_view)) {
         GetDefaultEyeFieldOfView(field_of_view);
         return;
     }
-    static_cast<cardboard::LensDistortion *>(lens_distortion)
-            ->GetEyeFieldOfView(eye, field_of_view);
+
+    meshes[eye].matrix.getFov(
+        field_of_view
+    );
 }
 
 void CardboardLensDistortion_getDistortionMesh(
-        CardboardLensDistortion *lens_distortion, CardboardEye eye,
-        CardboardMesh *mesh) {
+        CardboardLensDistortion *lens_distortion,
+        CardboardEye eye,
+        CardboardMesh *mesh
+) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) || CARDBOARD_IS_ARG_NULL(mesh)) {
         GetDefaultDistortionMesh(mesh);
         return;
     }
-    *mesh = static_cast<cardboard::LensDistortion *>(lens_distortion)
-            ->GetDistortionMesh(eye);
+
+    *mesh = meshes[eye].getDistortionMesh();
 }
 
 CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(

@@ -52,12 +52,6 @@ class LensDistortion {
       std::array<float, 2>& in,
       CardboardEye eye
   );
-  void GetEyeFromHeadMatrix(CardboardEye eye,
-                            float* eye_from_head_matrix) const;
-  void GetEyeProjectionMatrix(CardboardEye eye, float z_near, float z_far,
-                              float* projection_matrix) const;
-  void GetEyeFieldOfView(CardboardEye eye, float* field_of_view) const;
-  CardboardMesh GetDistortionMesh(CardboardEye eye) const;
  private:
   struct ViewportParams;
 
@@ -90,9 +84,6 @@ class LensDistortion {
   std::vector<CBDistortionMesh>& meshes_;
   //
 //  std::array<CBDistortionMeshMatrix, 2> matrices;
-//
-//  std::unique_ptr<DistortionMesh> left_mesh_;
-//  std::unique_ptr<DistortionMesh> right_mesh_;
   std::unique_ptr<PolynomialRadialDistortion> distortion_;
 };
 
