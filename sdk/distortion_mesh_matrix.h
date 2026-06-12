@@ -17,4 +17,9 @@ namespace cardboard {
         Matrix4x4 eye_from_head_matrix_;
     };
 
+    struct CBDistortionMesh {
+        CBDistortionMeshMatrix matrix;
+        std::unique_ptr<DistortionMesh> mesh;
+    };
+
 }

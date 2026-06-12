@@ -86,10 +86,12 @@ class LensDistortion {
   float screen_width_meters_;
   float screen_height_meters_;
 
-  std::array<CBDistortionMeshMatrix, 2> matrices;
-
-  std::unique_ptr<DistortionMesh> left_mesh_;
-  std::unique_ptr<DistortionMesh> right_mesh_;
+  std::array<CBDistortionMesh, 2> meshes;
+  //
+//  std::array<CBDistortionMeshMatrix, 2> matrices;
+//
+//  std::unique_ptr<DistortionMesh> left_mesh_;
+//  std::unique_ptr<DistortionMesh> right_mesh_;
   std::unique_ptr<PolynomialRadialDistortion> distortion_;
 };
 
