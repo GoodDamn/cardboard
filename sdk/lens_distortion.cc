@@ -38,16 +38,18 @@ namespace cardboard {
 
     LensDistortion::LensDistortion(
             float screenWidthMeters,
-            float screenHeightMeters
+            float screenHeightMeters,
+            std::vector<CBDistortionMesh>& meshes
     ) : screen_width_meters_(
             screenWidthMeters
     ), screen_height_meters_(
             screenHeightMeters
-    ) {
-        meshes[kLeft].matrix.eye_from_head_matrix_ = cardboard::Matrix4x4::Translation(
+    ), meshes_(meshes) {
+
+        meshes_[kLeft].matrix.eye_from_head_matrix_ = cardboard::Matrix4x4::Translation(
                 device_params_.inter_lens_distance() * 0.5f, 0.f, 0.f);
 
-        meshes[kRight].matrix.eye_from_head_matrix_ = cardboard::Matrix4x4::Translation(
+        meshes_[kRight].matrix.eye_from_head_matrix_ = cardboard::Matrix4x4::Translation(
                 -device_params_.inter_lens_distance() * 0.5f, 0.f, 0.f);
 
         std::vector<float> distortion_coefficients(
@@ -70,7 +72,7 @@ namespace cardboard {
             CardboardEye eye,
             float *eye_from_head_matrix
     ) const {
-        meshes[eye].matrix.eye_from_head_matrix_.ToArray(
+        meshes_[eye].matrix.eye_from_head_matrix_.ToArray(
             eye_from_head_matrix
         );
     }
@@ -80,7 +82,7 @@ namespace cardboard {
             float *projection_matrix
     ) const {
         Matrix4x4::Perspective(
-            meshes[eye].matrix.fov,
+            meshes_[eye].matrix.fov,
             z_near,
             z_far
         ).ToArray(projection_matrix);
@@ -92,7 +94,7 @@ namespace cardboard {
     ) const {
         std::memcpy(
             field_of_view,
-            meshes[eye].matrix.fov.data(),
+            meshes_[eye].matrix.fov.data(),
             sizeof(float) * 4
         );
     }
@@ -100,22 +102,22 @@ namespace cardboard {
     CardboardMesh LensDistortion::GetDistortionMesh(
         CardboardEye eye
     ) const {
-        return meshes[eye].mesh->GetMesh();
+        return meshes_[eye].mesh->GetMesh();
     }
 
     void LensDistortion::UpdateParams() {
 
-        meshes[kLeft].matrix.fov = CalculateFov();
+        meshes_[kLeft].matrix.fov = CalculateFov();
         // Mirror fov for right eye.
-        meshes[kRight].matrix.fov =    meshes[kLeft].matrix.fov;
-        meshes[kRight].matrix.fov[0] = meshes[kLeft].matrix.fov[1];
-        meshes[kRight].matrix.fov[1] = meshes[kLeft].matrix.fov[0];
+        meshes_[kRight].matrix.fov =    meshes_[kLeft].matrix.fov;
+        meshes_[kRight].matrix.fov[0] = meshes_[kLeft].matrix.fov[1];
+        meshes_[kRight].matrix.fov[1] = meshes_[kLeft].matrix.fov[0];
 
-        meshes[kLeft].mesh = std::unique_ptr<DistortionMesh>(
+        meshes_[kLeft].mesh = std::unique_ptr<DistortionMesh>(
             CreateDistortionMesh(kLeft)
         );
 
-        meshes[kRight].mesh = std::unique_ptr<DistortionMesh>(
+        meshes_[kRight].mesh = std::unique_ptr<DistortionMesh>(
             CreateDistortionMesh(kRight)
         );
     }
@@ -136,7 +138,7 @@ namespace cardboard {
         );
 
         calculateTextureParams(
-                meshes[eye].matrix.fov,
+                meshes_[eye].matrix.fov,
                 &texture_params
         );
         // Convert input from normalized [0, 1] screen coordinates to eye-centered
@@ -172,7 +174,7 @@ namespace cardboard {
         );
 
         calculateTextureParams(
-                meshes[eye].matrix.fov,
+                meshes_[eye].matrix.fov,
                 &texture_params
         );
         // Convert input from normalized [0, 1] pre distort texture space to
@@ -249,7 +251,7 @@ namespace cardboard {
         );
 
         calculateTextureParams(
-                meshes[eye].matrix.fov,
+                meshes_[eye].matrix.fov,
                 &texture_params
         );
 

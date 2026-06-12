@@ -20,6 +20,7 @@
 
 #include "include/cardboard.h"
 #include "polynomial_radial_distortion.h"
+#include "util/matrix_4x4.h"
 
 namespace cardboard {
 
@@ -34,7 +35,10 @@ class DistortionMesh {
   virtual ~DistortionMesh() = default;
   CardboardMesh GetMesh() const;
 
- private:
+  Matrix4x4 eye_from_head_matrix_;
+  std::array<float, 4> fov_;  // L, R, B, T
+
+  private:
   static constexpr int kResolution = 40;
   std::vector<int> index_data_;
   std::vector<float> vertex_data_;
