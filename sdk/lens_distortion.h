@@ -26,6 +26,7 @@
 #endif
 
 #include "distortion_mesh.h"
+#include "distortion_mesh_matrix.h"
 #include "include/cardboard.h"
 #include "polynomial_radial_distortion.h"
 #include "util/matrix_4x4.h"
@@ -60,27 +61,21 @@ class LensDistortion {
   struct ViewportParams;
 
   void UpdateParams();
-  float GetYEyeOffsetMeters(
-    const DeviceParams& device_params
-  );
+  float GetYEyeOffsetMeters();
 
   DistortionMesh* CreateDistortionMesh(
-      CardboardEye eye,
-      cardboard::DeviceParams& device_params,
-      cardboard::PolynomialRadialDistortion& distortion,
-      std::array<float, 4>& fov
+      CardboardEye eye
   );
 
-  std::array<float, 4> CalculateFov(
-      cardboard::DeviceParams& device_params,
-      cardboard::PolynomialRadialDistortion& distortion
-  );
+  std::array<float, 4> CalculateFov();
 
-  void CalculateViewportParameters(
+  void calculateScreenParams(
           CardboardEye eye,
-          DeviceParams& device_params,
+          ViewportParams* screen_params
+  );
+
+  void calculateTextureParams(
           std::array<float, 4>& fov,
-          ViewportParams* screen_params,
           ViewportParams* texture_params
   );
 
@@ -90,8 +85,9 @@ class LensDistortion {
 
   float screen_width_meters_;
   float screen_height_meters_;
-  std::array<std::array<float, 4>, 2> fov_;  // L, R, B, T
-  std::array<Matrix4x4, 2> eye_from_head_matrix_;
+
+  std::array<CBDistortionMeshMatrix, 2> matrices;
+
   std::unique_ptr<DistortionMesh> left_mesh_;
   std::unique_ptr<DistortionMesh> right_mesh_;
   std::unique_ptr<PolynomialRadialDistortion> distortion_;
