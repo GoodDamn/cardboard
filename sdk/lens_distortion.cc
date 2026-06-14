@@ -21,6 +21,8 @@
 #include <cstring>
 #include <memory>
 #include <vector>
+#include "viewport_params.h"
+
 
 #include "include/cardboard.h"
 
@@ -28,132 +30,149 @@ namespace cardboard {
 
     constexpr float kDefaultBorderSizeMeters = 0.003f;
 
-    // All values in tanangle units.
-    struct LensDistortion::ViewportParams {
-        float width;
-        float height;
-        float x_eye_offset;
-        float y_eye_offset;
-    };
-
     LensDistortion::LensDistortion(
-            float screenWidthMeters,
-            float screenHeightMeters,
-            std::vector<CBDistortionMesh>& meshes
+        float screenWidthMeters,
+        float screenHeightMeters,
+        std::vector<std::unique_ptr<CBDistortionMesh>>& meshes
     ) : screen_width_meters_(
-            screenWidthMeters
+        screenWidthMeters
     ), screen_height_meters_(
-            screenHeightMeters
-    ), meshes_(meshes) {
-
-        meshes_[kLeft].matrix.eye_from_head_matrix_ = cardboard::Matrix4x4::Translation(
-                device_params_.inter_lens_distance() * 0.5f, 0.f, 0.f);
-
-        meshes_[kRight].matrix.eye_from_head_matrix_ = cardboard::Matrix4x4::Translation(
-                -device_params_.inter_lens_distance() * 0.5f, 0.f, 0.f);
+        screenHeightMeters
+    ) {
+        for (const auto & meshe : meshes) {
+            meshe->calculateHeadMatrix(
+                device_params_.inter_lens_distance()
+            );
+        }
 
         std::vector<float> distortion_coefficients(
-                device_params_.distortion_coefficients_size(),
-                0.0f
+            device_params_.distortion_coefficients_size(),
+            0.0f
         );
 
         for (int i = 0; i < device_params_.distortion_coefficients_size(); i++) {
             distortion_coefficients.at(i) = device_params_.distortion_coefficients(i);
         }
 
-        distortion_ = std::unique_ptr<PolynomialRadialDistortion>(
-                new PolynomialRadialDistortion(distortion_coefficients)
+        distortion_ = std::make_unique<PolynomialRadialDistortion>(
+            distortion_coefficients
         );
 
-        UpdateParams();
-    }
+        std::array<float, 4> calculatedFov = CalculateFov();
 
-    void LensDistortion::UpdateParams() {
+        int i = 0;
+        float yOffsetMeters = GetYEyeOffsetMeters();
+        for (const auto & meshe : meshes) {
+            meshe->calculateFov(
+                calculatedFov
+            );
 
-        meshes_[kLeft].matrix.fov = CalculateFov();
-        // Mirror fov for right eye.
-        meshes_[kRight].matrix.fov =    meshes_[kLeft].matrix.fov;
-        meshes_[kRight].matrix.fov[0] = meshes_[kLeft].matrix.fov[1];
-        meshes_[kRight].matrix.fov[1] = meshes_[kLeft].matrix.fov[0];
+            ViewportParams paramsScreen, paramsTexture;
 
-        meshes_[kLeft].mesh = std::unique_ptr<DistortionMesh>(
-            CreateDistortionMesh(kLeft)
-        );
+            meshe->calculateScreenParams(
+                &device_params_,
+                screenWidthMeters,
+                screenHeightMeters,
+                yOffsetMeters,
+                &paramsScreen
+            );
 
-        meshes_[kRight].mesh = std::unique_ptr<DistortionMesh>(
-            CreateDistortionMesh(kRight)
-        );
+            meshe->calculateTextureParams(
+                &paramsTexture
+            );
+
+            meshe->mesh = std::make_unique<DistortionMesh>(
+                *distortion_,
+                paramsScreen.width,
+                paramsScreen.height,
+                paramsScreen.x_eye_offset,
+                paramsScreen.y_eye_offset,
+                paramsTexture.width,
+                paramsTexture.height,
+                paramsTexture.x_eye_offset,
+                paramsTexture.y_eye_offset
+            );
+        }
     }
 
     std::array<float, 2> LensDistortion::DistortedUvForUndistortedUv(
-            std::array<float, 2> &in,
-            CardboardEye eye
+        std::unique_ptr<CBDistortionMesh>& mesh,
+        std::array<float, 2> &in
     ) {
         if (screen_width_meters_ == 0 || screen_height_meters_ == 0) {
             return {0, 0};
         }
 
-        ViewportParams screen_params, texture_params;
+        ViewportParams paramsScreen, paramsTexture;
 
-        calculateScreenParams(
-                eye,
-                &screen_params
+        mesh->calculateScreenParams(
+            &device_params_,
+            screen_width_meters_,
+            screen_height_meters_,
+            GetYEyeOffsetMeters(),
+            &paramsScreen
         );
 
-        calculateTextureParams(
-                meshes_[eye].matrix.fov,
-                &texture_params
+        mesh->calculateTextureParams(
+            &paramsTexture
         );
+
         // Convert input from normalized [0, 1] screen coordinates to eye-centered
         // tanangle units.
         std::array<float, 2> undistorted_uv_tanangle = {
-                in[0] * screen_params.width - screen_params.x_eye_offset,
-                in[1] * screen_params.height - screen_params.y_eye_offset};
+            in[0] * paramsScreen.width - paramsScreen.x_eye_offset,
+            in[1] * paramsScreen.height - paramsScreen.y_eye_offset
+        };
 
-        std::array<float, 2> distorted_uv_tanangle =
-                distortion_->Distort(undistorted_uv_tanangle);
+        std::array<float, 2> distorted_uv_tanangle = distortion_->Distort(
+            undistorted_uv_tanangle
+        );
 
         // Convert output from tanangle units to normalized [0, 1] pre distort texture
         // space.
-        return {(distorted_uv_tanangle[0] + texture_params.x_eye_offset) /
-                texture_params.width,
-                (distorted_uv_tanangle[1] + texture_params.y_eye_offset) /
-                texture_params.height};
+        return {
+            (distorted_uv_tanangle[0] + paramsTexture.x_eye_offset) / paramsTexture.width,
+            (distorted_uv_tanangle[1] + paramsTexture.y_eye_offset) / paramsTexture.height
+        };
     }
 
     std::array<float, 2> LensDistortion::UndistortedUvForDistortedUv(
-            std::array<float, 2> &in,
-            CardboardEye eye
+        std::unique_ptr<CBDistortionMesh>& mesh,
+        std::array<float, 2> &in
     ) {
         if (screen_width_meters_ == 0 || screen_height_meters_ == 0) {
             return {0, 0};
         }
 
-        ViewportParams screen_params, texture_params;
-
-        calculateScreenParams(
-                eye,
-                &screen_params
+        ViewportParams paramsScreen, paramsTexture;
+        mesh->calculateScreenParams(
+            &device_params_,
+            screen_width_meters_,
+            screen_height_meters_,
+            GetYEyeOffsetMeters(),
+            &paramsScreen
         );
 
-        calculateTextureParams(
-                meshes_[eye].matrix.fov,
-                &texture_params
+        mesh->calculateTextureParams(
+            &paramsTexture
         );
+
         // Convert input from normalized [0, 1] pre distort texture space to
         // eye-centered tanangle units.
         std::array<float, 2> distorted_uv_tanangle = {
-                in[0] * texture_params.width - texture_params.x_eye_offset,
-                in[1] * texture_params.height - texture_params.y_eye_offset};
+            in[0] * paramsTexture.width - paramsTexture.x_eye_offset,
+            in[1] * paramsTexture.height - paramsTexture.y_eye_offset
+        };
 
-        std::array<float, 2> undistorted_uv_tanangle =
-                distortion_->DistortInverse(distorted_uv_tanangle);
+        std::array<float, 2> undistorted_uv_tanangle = distortion_->DistortInverse(
+            distorted_uv_tanangle
+        );
 
         // Convert output from tanangle units to normalized [0, 1] screen coordinates.
-        return {(undistorted_uv_tanangle[0] + screen_params.x_eye_offset) /
-                screen_params.width,
-                (undistorted_uv_tanangle[1] + screen_params.y_eye_offset) /
-                screen_params.height};
+        return {
+            (undistorted_uv_tanangle[0] + paramsScreen.x_eye_offset) / paramsScreen.width,
+            (undistorted_uv_tanangle[1] + paramsScreen.y_eye_offset) / paramsScreen.height
+        };
     }
 
     std::array<float, 4> LensDistortion::CalculateFov() {
@@ -201,62 +220,6 @@ namespace cardboard {
                 return screen_height_meters_ - device_params_.tray_to_lens_distance() -
                        kDefaultBorderSizeMeters;
         }
-    }
-
-    DistortionMesh *LensDistortion::CreateDistortionMesh(
-            CardboardEye eye
-    ) {
-        ViewportParams screen_params, texture_params;
-
-        calculateScreenParams(
-                eye,
-                &screen_params
-        );
-
-        calculateTextureParams(
-                meshes_[eye].matrix.fov,
-                &texture_params
-        );
-
-        return new DistortionMesh(
-                *distortion_,
-                screen_params.width,
-                screen_params.height,
-                screen_params.x_eye_offset,
-                screen_params.y_eye_offset,
-                texture_params.width,
-                texture_params.height,
-                texture_params.x_eye_offset,
-                texture_params.y_eye_offset
-        );
-    }
-
-    void LensDistortion::calculateScreenParams(
-            CardboardEye eye,
-            ViewportParams *screen_params
-    ) {
-        float interLensDistance = device_params_.inter_lens_distance();
-        float screenLensDistance = device_params_.screen_to_lens_distance();
-
-        screen_params->width = screen_width_meters_ / screenLensDistance;
-        screen_params->height = screen_height_meters_ / screenLensDistance;
-
-        screen_params->x_eye_offset = eye == kLeft ?
-                                      ((screen_width_meters_ - interLensDistance) / 2) / screenLensDistance
-                                                   : ((screen_width_meters_ + interLensDistance) / 2) / screenLensDistance;
-
-        screen_params->y_eye_offset = GetYEyeOffsetMeters() / screenLensDistance;
-    }
-
-    void LensDistortion::calculateTextureParams(
-            std::array<float, 4> &fov,
-            ViewportParams *texture_params
-    ) {
-        texture_params->width = tan(fov[0]) + tan(fov[1]);
-        texture_params->height = tan(fov[2]) + tan(fov[3]);
-
-        texture_params->x_eye_offset = tan(fov[0]);
-        texture_params->y_eye_offset = tan(fov[2]);
     }
 
     constexpr float LensDistortion::DegreesToRadians(float angle) {

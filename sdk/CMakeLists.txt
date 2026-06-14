@@ -39,6 +39,7 @@ include_directories(.)
 # === Cardboard API ===
 # General Sources
 file(GLOB general_srcs "*.cc")
+file(GLOB bb "distortion_eyes.cc")
 # Sensors Sources
 file(GLOB sensors_srcs "sensors/*.cc")
 file(GLOB sensors_android_srcs "sensors/android/*.cc")
@@ -61,6 +62,7 @@ endif()
 add_library(GfxPluginCardboard SHARED
     # Cardboard API sources.
     ${general_srcs}
+    ${bb}
     ${sensors_srcs}
     ${sensors_android_srcs}
     ${jni_util_srcs}

@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include "distortion_renderer.h"
+#include "distortion_eyes.h"
 #include "head_tracker.h"
 #include "lens_distortion.h"
 #include "util/is_arg_null.h"
@@ -25,10 +26,8 @@
 #include "util/logging.h"
 
 #ifdef __ANDROID__
-
 #include "device_params/android/device_params.h"
 #include "jni_utils/android/jni_utils.h"
-
 #endif
 
 // TODO(b/134142617): Revisit struct/class hierarchy.
@@ -42,59 +41,73 @@ struct CardboardHeadTracker : cardboard::HeadTracker {
 namespace {
     // Return default (identity) matrix.
     void GetDefaultMatrix(float *matrix) {
-        if (matrix != nullptr) {
-            for (int i = 0; i < 4; ++i) {
-                for (int j = 0; j < 4; ++j) {
-                    matrix[i * 4 + j] = (i == j) ? 1.0f : 0.0f;
-                }
+        if (matrix == nullptr) {
+            return;
+        }
+
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                matrix[i * 4 + j] = (i == j) ? 1.0f : 0.0f;
             }
         }
     }
 
 // Return default (all angles equal to 45 degrees) field of view.
     void GetDefaultEyeFieldOfView(float *field_of_view) {
-        if (field_of_view != nullptr) {
-            float default_angle = 45.0f * M_PI / 180.0f;
-            for (int i = 0; i < 4; ++i) {
-                field_of_view[i] = default_angle;
-            }
+        if (field_of_view == nullptr) {
+            return;
+        }
+
+        float default_angle = 45.0f * M_PI / 180.0f;
+        for (int i = 0; i < 4; ++i) {
+            field_of_view[i] = default_angle;
         }
     }
 
 // Return default (empty) distortion mesh.
     void GetDefaultDistortionMesh(CardboardMesh *mesh) {
-        if (mesh != nullptr) {
-            mesh->indices = nullptr;
-            mesh->n_indices = 0;
-            mesh->vertices = nullptr;
-            mesh->uvs = nullptr;
-            mesh->n_vertices = 0;
+        if (mesh == nullptr) {
+            return;
         }
+
+        mesh->indices = nullptr;
+        mesh->n_indices = 0;
+        mesh->vertices = nullptr;
+        mesh->uvs = nullptr;
+        mesh->n_vertices = 0;
     }
 
 // Return default (zero) position.
     void GetDefaultPosition(float *position) {
-        if (position != nullptr) {
-            position[0] = 0.0f;
-            position[1] = 0.0f;
-            position[2] = 0.0f;
+        if (position == nullptr) {
+            return;
         }
+        position[0] = 0.0f;
+        position[1] = 0.0f;
+        position[2] = 0.0f;
     }
 
 // Return default (identity quaternion) orientation.
     void GetDefaultOrientation(float *orientation) {
-        if (orientation != nullptr) {
-            orientation[0] = 0.0f;
-            orientation[1] = 0.0f;
-            orientation[2] = 0.0f;
-            orientation[3] = 1.0f;
+        if (orientation == nullptr) {
+            return;
         }
+
+        orientation[0] = 0.0f;
+        orientation[1] = 0.0f;
+        orientation[2] = 0.0f;
+        orientation[3] = 1.0f;
     }
 
 }  // anonymous namespace
 
 extern "C" {
-    std::vector<cardboard::CBDistortionMesh> meshes;
+
+std::vector<
+    std::unique_ptr<
+        cardboard::CBDistortionMesh
+    >
+> meshes;
 
 #ifdef __ANDROID__
 void Cardboard_initializeAndroid(JavaVM *vm, jobject context) {
@@ -108,30 +121,33 @@ void Cardboard_initializeAndroid(JavaVM *vm, jobject context) {
     cardboard::jni::initializeAndroid(vm, global_context);
 
     cardboard::util::SetIsInitialized();
-    meshes.push_back(
-            cardboard::CBDistortionMesh()
-    );
-
-    meshes.push_back(
-            cardboard::CBDistortionMesh()
-    );
 }
 #endif
 
 CardboardLensDistortion *CardboardLensDistortion_create(
-        float screenWidthMeters,
-        float screenHeightMeters
+    float screenWidthMeters,
+    float screenHeightMeters
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED()) {
         return nullptr;
     }
 
-    return reinterpret_cast<CardboardLensDistortion *>(
-            new cardboard::LensDistortion(
-                    screenWidthMeters,
-                    screenHeightMeters,
-                    meshes
-            )
+    meshes.clear();
+
+    meshes.push_back(
+        std::make_unique<cardboard::CBDistortionMeshEyeLeft>()
+    );
+
+    meshes.push_back(
+        std::make_unique<cardboard::CBDistortionMeshEyeRight>()
+    );
+
+    return reinterpret_cast<CardboardLensDistortion*>(
+        new cardboard::LensDistortion(
+            screenWidthMeters,
+            screenHeightMeters,
+            meshes
+        )
     );
 }
 
@@ -144,9 +160,9 @@ void CardboardLensDistortion_destroy(CardboardLensDistortion *lens_distortion) {
 }
 
 void CardboardLensDistortion_getEyeFromHeadMatrix(
-        CardboardLensDistortion *lens_distortion,
-        CardboardEye eye,
-        float *eye_from_head_matrix
+    CardboardLensDistortion *lens_distortion,
+    CardboardEye eye,
+    float *eye_from_head_matrix
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
@@ -155,17 +171,17 @@ void CardboardLensDistortion_getEyeFromHeadMatrix(
         return;
     }
 
-    meshes[eye].matrix.getHeadMatrix(
+    meshes[eye]->matrix.getHeadMatrix(
         eye_from_head_matrix
     );
 }
 
 void CardboardLensDistortion_getProjectionMatrix(
-        CardboardLensDistortion *lens_distortion,
-        CardboardEye eye,
-        float z_near,
-        float z_far,
-        float *projection_matrix
+    CardboardLensDistortion *lens_distortion,
+    CardboardEye eye,
+    float z_near,
+    float z_far,
+    float *projection_matrix
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
@@ -174,7 +190,7 @@ void CardboardLensDistortion_getProjectionMatrix(
         return;
     }
 
-    meshes[eye].matrix.getProjectionMatrix(
+    meshes[eye]->matrix.getProjectionMatrix(
         z_near,
         z_far,
         projection_matrix
@@ -182,9 +198,9 @@ void CardboardLensDistortion_getProjectionMatrix(
 }
 
 void CardboardLensDistortion_getFieldOfView(
-        CardboardLensDistortion *lens_distortion,
-        CardboardEye eye,
-        float *field_of_view
+    CardboardLensDistortion *lens_distortion,
+    CardboardEye eye,
+    float *field_of_view
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
@@ -193,15 +209,15 @@ void CardboardLensDistortion_getFieldOfView(
         return;
     }
 
-    meshes[eye].matrix.getFov(
+    meshes[eye]->matrix.getFov(
         field_of_view
     );
 }
 
 void CardboardLensDistortion_getDistortionMesh(
-        CardboardLensDistortion *lens_distortion,
-        CardboardEye eye,
-        CardboardMesh *mesh
+    CardboardLensDistortion *lens_distortion,
+    CardboardEye eye,
+    CardboardMesh *mesh
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) || CARDBOARD_IS_ARG_NULL(mesh)) {
@@ -209,22 +225,32 @@ void CardboardLensDistortion_getDistortionMesh(
         return;
     }
 
-    *mesh = meshes[eye].getDistortionMesh();
+    *mesh = meshes[eye]->mesh->GetMesh();
 }
 
 CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
-        CardboardLensDistortion *lens_distortion, const CardboardUv *distorted_uv,
-        CardboardEye eye) {
+    CardboardLensDistortion *lens_distortion,
+    const CardboardUv *distorted_uv,
+    CardboardEye eye
+) {
+
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
         CARDBOARD_IS_ARG_NULL(distorted_uv)) {
         return CardboardUv{/*.u=*/-1, /*.v=*/-1};
     }
 
-    std::array<float, 2> in = {distorted_uv->u, distorted_uv->v};
-    std::array<float, 2> out =
-            static_cast<cardboard::LensDistortion *>(lens_distortion)
-                    ->UndistortedUvForDistortedUv(in, eye);
+    std::array<float, 2> in = {
+        distorted_uv->u,
+        distorted_uv->v
+    };
+
+    std::array<float, 2> out = static_cast<
+        cardboard::LensDistortion *
+    >(lens_distortion)->UndistortedUvForDistortedUv(
+        meshes[eye],
+        in
+    );
 
     CardboardUv ret;
     ret.u = out[0];
@@ -233,18 +259,26 @@ CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
 }
 
 CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
-        CardboardLensDistortion *lens_distortion, const CardboardUv *undistorted_uv,
-        CardboardEye eye) {
+    CardboardLensDistortion *lens_distortion, const CardboardUv *undistorted_uv,
+    CardboardEye eye) {
+
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) ||
         CARDBOARD_IS_ARG_NULL(undistorted_uv)) {
         return CardboardUv{/*.u=*/-1, /*.v=*/-1};
     }
 
-    std::array<float, 2> in = {undistorted_uv->u, undistorted_uv->v};
-    std::array<float, 2> out =
-            static_cast<cardboard::LensDistortion *>(lens_distortion)
-                    ->DistortedUvForUndistortedUv(in, eye);
+    std::array<float, 2> in = {
+        undistorted_uv->u,
+        undistorted_uv->v
+    };
+
+    std::array<float, 2> out = static_cast<
+        cardboard::LensDistortion *
+        >(lens_distortion)->DistortedUvForUndistortedUv(
+        meshes[eye],
+        in
+    );
 
     CardboardUv ret;
     ret.u = out[0];
@@ -253,16 +287,18 @@ CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
 }
 
 void CardboardDistortionRenderer_destroy(
-        CardboardDistortionRenderer *renderer) {
+    CardboardDistortionRenderer *renderer) {
     if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(renderer)) {
         return;
     }
     delete renderer;
 }
 
-void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer *renderer,
-                                         const CardboardMesh *mesh,
-                                         CardboardEye eye) {
+void CardboardDistortionRenderer_setMesh(
+    CardboardDistortionRenderer *renderer,
+    const CardboardMesh *mesh,
+    CardboardEye eye
+) {
     if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(renderer) ||
         CARDBOARD_IS_ARG_NULL(mesh)) {
         return;
@@ -271,15 +307,15 @@ void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer *renderer,
 }
 
 void CardboardDistortionRenderer_renderEyeToDisplay(
-        CardboardDistortionRenderer *renderer, uint64_t target, int x, int y,
-        int width, int height, const CardboardEyeTextureDescription *left_eye,
-        const CardboardEyeTextureDescription *right_eye) {
+    CardboardDistortionRenderer *renderer, uint64_t target, int x, int y,
+    int width, int height, const CardboardEyeTextureDescription *left_eye,
+    const CardboardEyeTextureDescription *right_eye) {
     if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(renderer) ||
         CARDBOARD_IS_ARG_NULL(left_eye) || CARDBOARD_IS_ARG_NULL(right_eye)) {
         return;
     }
     static_cast<cardboard::DistortionRenderer *>(renderer)->RenderEyeToDisplay(
-            target, x, y, width, height, left_eye, right_eye);
+        target, x, y, width, height, left_eye, right_eye);
 }
 
 CardboardHeadTracker *CardboardHeadTracker_create() {
@@ -318,9 +354,10 @@ void CardboardHeadTracker_resume(CardboardHeadTracker *head_tracker) {
 }
 
 void CardboardHeadTracker_getPose(
-        CardboardHeadTracker *head_tracker, int64_t timestamp_ns,
-        CardboardViewportOrientation viewport_orientation, float *position,
-        float *orientation) {
+    CardboardHeadTracker *head_tracker, int64_t timestamp_ns,
+    CardboardViewportOrientation viewport_orientation, float *position,
+    float *orientation
+) {
     if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(head_tracker) ||
         CARDBOARD_IS_ARG_NULL(position) || CARDBOARD_IS_ARG_NULL(orientation)) {
         GetDefaultPosition(position);
@@ -330,7 +367,7 @@ void CardboardHeadTracker_getPose(
     std::array<float, 3> out_position;
     std::array<float, 4> out_orientation;
     static_cast<cardboard::HeadTracker *>(head_tracker)
-            ->GetPose(timestamp_ns, viewport_orientation, out_position, out_orientation);
+        ->GetPose(timestamp_ns, viewport_orientation, out_position, out_orientation);
     std::memcpy(position, &out_position[0], 3 * sizeof(float));
     std::memcpy(orientation, &out_orientation[0], 4 * sizeof(float));
 }

@@ -21,9 +21,9 @@ namespace cardboard {
             float *projection_matrix
     ) const {
         Matrix4x4::Perspective(
-                fov,
-                z_near,
-                z_far
+            fov,
+            z_near,
+            z_far
         ).ToArray(
             projection_matrix
         );
@@ -33,7 +33,7 @@ namespace cardboard {
             float *eye_from_head_matrix
     ) const {
         eye_from_head_matrix_.ToArray(
-                eye_from_head_matrix
+            eye_from_head_matrix
         );
     }
 
@@ -41,14 +41,9 @@ namespace cardboard {
             float *field_of_view
     ) const {
         std::memcpy(
-                field_of_view,
-                fov.data(),
-                sizeof(float) * 4
+            field_of_view,
+            fov.data(),
+            sizeof(float) * 4
         );
     }
-
-    CardboardMesh CBDistortionMesh::getDistortionMesh() const {
-        return mesh->GetMesh();
-    }
-
 }

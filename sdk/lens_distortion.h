@@ -25,7 +25,6 @@
 #include "cardboard_device.pb.h"
 #endif
 
-#include "distortion_mesh.h"
 #include "distortion_mesh_matrix.h"
 #include "include/cardboard.h"
 #include "polynomial_radial_distortion.h"
@@ -38,41 +37,26 @@ class LensDistortion {
   LensDistortion(
     float screenWidthMeters,
     float screenHeightMeters,
-    std::vector<CBDistortionMesh>& meshes
+    std::vector<std::unique_ptr<CBDistortionMesh>>& meshes
   );
+
   // Tan angle units. "DistortedUvForUndistoredUv" goes through the forward
   // distort function. I.e. the lens. UndistortedUvForDistortedUv uses the
   // inverse distort function.
   std::array<float, 2> DistortedUvForUndistortedUv(
-      std::array<float, 2>& in,
-      CardboardEye eye
+      std::unique_ptr<CBDistortionMesh>& mesh,
+      std::array<float, 2>& in
   );
 
   std::array<float, 2> UndistortedUvForDistortedUv(
-      std::array<float, 2>& in,
-      CardboardEye eye
+      std::unique_ptr<CBDistortionMesh>& mesh,
+      std::array<float, 2>& in
   );
  private:
-  struct ViewportParams;
 
-  void UpdateParams();
   float GetYEyeOffsetMeters();
 
-  DistortionMesh* CreateDistortionMesh(
-      CardboardEye eye
-  );
-
   std::array<float, 4> CalculateFov();
-
-  void calculateScreenParams(
-          CardboardEye eye,
-          ViewportParams* screen_params
-  );
-
-  void calculateTextureParams(
-          std::array<float, 4>& fov,
-          ViewportParams* texture_params
-  );
 
   static constexpr float DegreesToRadians(float angle);
 
@@ -81,9 +65,6 @@ class LensDistortion {
   float screen_width_meters_;
   float screen_height_meters_;
 
-  std::vector<CBDistortionMesh>& meshes_;
-  //
-//  std::array<CBDistortionMeshMatrix, 2> matrices;
   std::unique_ptr<PolynomialRadialDistortion> distortion_;
 };
 
