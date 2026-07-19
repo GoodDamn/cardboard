@@ -383,7 +383,7 @@ void CardboardLensDistortion_getDistortionMesh(
 /// @param[in]      distorted_uv            Distorted UV point.
 /// @param[in]      eye                     Desired eye.
 /// @return         Point normalized [0,1] in the screen post distort space.
-CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
+/*CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
     CardboardLensDistortion* lens_distortion, const CardboardUv* distorted_uv,
     CardboardEye eye);
 
@@ -404,7 +404,7 @@ CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
     CardboardLensDistortion* lens_distortion, const CardboardUv* undistorted_uv,
     CardboardEye eye);
 /// @}
-
+*/
 /////////////////////////////////////////////////////////////////////////////
 // Distortion Renderer
 /////////////////////////////////////////////////////////////////////////////

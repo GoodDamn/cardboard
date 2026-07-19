@@ -239,63 +239,6 @@ void CardboardLensDistortion_getDistortionMesh(
     mesh->n_vertices = static_cast<int>(vertices->size() / 2);
 }
 
-CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
-    CardboardLensDistortion *lens_distortion,
-    const CardboardUv *distorted_uv,
-    CardboardEye eye
-) {
-
-    if (CARDBOARD_IS_NOT_INITIALIZED() ||
-        CARDBOARD_IS_ARG_NULL(lens_distortion) ||
-        CARDBOARD_IS_ARG_NULL(distorted_uv)) {
-        return CardboardUv{/*.u=*/-1, /*.v=*/-1};
-    }
-
-    std::array<float, 2> in = {
-        distorted_uv->u,
-        distorted_uv->v
-    };
-
-    std::array<float, 2> out = static_cast<
-        cardboard::LensDistortion *
-    >(lens_distortion)->UndistortedUvForDistortedUv(
-        meshes[eye],
-        in
-    );
-
-    CardboardUv ret;
-    ret.u = out[0];
-    ret.v = out[1];
-    return ret;
-}
-
-CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
-    CardboardLensDistortion *lens_distortion, const CardboardUv *undistorted_uv,
-    CardboardEye eye) {
-
-    if (CARDBOARD_IS_NOT_INITIALIZED() ||
-        CARDBOARD_IS_ARG_NULL(lens_distortion) ||
-        CARDBOARD_IS_ARG_NULL(undistorted_uv)) {
-        return CardboardUv{/*.u=*/-1, /*.v=*/-1};
-    }
-
-    std::array<float, 2> in = {
-        undistorted_uv->u,
-        undistorted_uv->v
-    };
-
-    std::array<float, 2> out = static_cast<
-        cardboard::LensDistortion *
-        >(lens_distortion)->DistortedUvForUndistortedUv(
-        meshes[eye],
-        in
-    );
-
-    CardboardUv ret;
-    ret.u = out[0];
-    ret.v = out[1];
-    return ret;
-}
 
 void CardboardDistortionRenderer_destroy(
     CardboardDistortionRenderer *renderer) {
@@ -412,5 +355,64 @@ void CardboardHeadTracker_recenter(CardboardHeadTracker *head_tracker) {
     }
     static_cast<cardboard::HeadTracker *>(head_tracker)->Recenter();
 }
+
+/*CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
+    CardboardLensDistortion *lens_distortion,
+    const CardboardUv *distorted_uv,
+    CardboardEye eye
+) {
+
+    if (CARDBOARD_IS_NOT_INITIALIZED() ||
+        CARDBOARD_IS_ARG_NULL(lens_distortion) ||
+        CARDBOARD_IS_ARG_NULL(distorted_uv)) {
+        return CardboardUv{-1, -1}; // u, v
+    }
+
+    std::array<float, 2> in = {
+        distorted_uv->u,
+        distorted_uv->v
+    };
+
+    std::array<float, 2> out = static_cast<
+        cardboard::LensDistortion *
+    >(lens_distortion)->UndistortedUvForDistortedUv(
+        meshes[eye],
+        in
+    );
+
+    CardboardUv ret;
+    ret.u = out[0];
+    ret.v = out[1];
+    return ret;
+}
+
+CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
+    CardboardLensDistortion *lens_distortion, const CardboardUv *undistorted_uv,
+    CardboardEye eye) {
+
+    if (CARDBOARD_IS_NOT_INITIALIZED() ||
+        CARDBOARD_IS_ARG_NULL(lens_distortion) ||
+        CARDBOARD_IS_ARG_NULL(undistorted_uv)) {
+        return CardboardUv{-1, -1}; // u, v
+    }
+
+    std::array<float, 2> in = {
+        undistorted_uv->u,
+        undistorted_uv->v
+    };
+
+    std::array<float, 2> out = static_cast<
+        cardboard::LensDistortion *
+        >(lens_distortion)->DistortedUvForUndistortedUv(
+        meshes[eye],
+        in
+    );
+
+    CardboardUv ret;
+    ret.u = out[0];
+    ret.v = out[1];
+    return ret;
+}*/
+
 
 }  // extern "C"
