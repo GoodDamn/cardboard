@@ -175,7 +175,7 @@ private:
         int elements_count;
     };
 
-    GLEye mRenderEyes[2];
+    std::array<GLEye, 2> mRenderEyes;
 
     void generateBuffersEye(
         GLEye* eye
@@ -228,9 +228,9 @@ public:
     uniform_end_ = glGetUniformLocation(program_, "u_End");
 
     // Gen buffers, one per eye.
-    for (uint8_t i = 0; i < 2; i++) {
+    for (auto & renderEye : mRenderEyes) {
         generateBuffersEye(
-            &mRenderEyes[i]
+            &renderEye
         );
     }
 
@@ -238,9 +238,9 @@ public:
   }
 
   ~OpenGlEs3DistortionRenderer() {
-      for (uint8_t i = 0; i < 2; i++) {
+      for (auto & renderEye : mRenderEyes) {
           deleteBuffersEye(
-              &mRenderEyes[i]
+              &renderEye
           );
       }
       CheckGlError("~OpenGlEs3DistortionRenderer");
@@ -322,8 +322,8 @@ public:
       const CardboardMesh *right_eye
   ) override {
 
-      for (uint8_t i = 0; i < 2; i++) {
-          if (mRenderEyes[i].elements_count == 0) {
+      for (auto & renderEye : mRenderEyes) {
+          if (renderEye.elements_count == 0) {
               CARDBOARD_LOGE(
                   "Distortion mesh is empty. OpenGlEs3DistortionRenderer::SetMesh was "
                   "not called yet.");
