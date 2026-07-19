@@ -276,34 +276,15 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   mLeftEye.id = 0;
   mRightEye.id = 1;
 
-  CardboardMesh localLeftMesh;
-  CardboardMesh localRightMesh;
-
   CardboardLensDistortion_getDistortionMesh(
       lens_distortion_,
-      kLeft,
-      &localLeftMesh
+      &mLeftEye
   );
 
   CardboardLensDistortion_getDistortionMesh(
       lens_distortion_,
-      kRight,
-      &localRightMesh
+      &mRightEye
   );
-
-    mLeftEye.indices = localLeftMesh.indices;
-    mLeftEye.vertices = localLeftMesh.vertices;
-    mLeftEye.uvs = localLeftMesh.uvs;
-    mLeftEye.n_indices = localLeftMesh.n_indices;
-    mLeftEye.n_vertices = localLeftMesh.n_vertices;
-
-    mRightEye.indices = localRightMesh.indices;
-    mRightEye.vertices = localRightMesh.vertices;
-    mRightEye.uvs = localRightMesh.uvs;
-    mRightEye.n_indices = localRightMesh.n_indices;
-    mRightEye.n_vertices = localRightMesh.n_vertices;
-
-
 
   LOGD("SetMesh:: LEFT_EYE: ID: %i", mLeftEye.id);
   CardboardDistortionRenderer_setMesh(

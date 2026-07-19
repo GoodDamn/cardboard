@@ -216,8 +216,7 @@ void CardboardLensDistortion_getFieldOfView(
 
 void CardboardLensDistortion_getDistortionMesh(
     CardboardLensDistortion *lens_distortion,
-    CardboardEye eye,
-    CardboardMesh *mesh
+    CardboardMesh* mesh
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(lens_distortion) || CARDBOARD_IS_ARG_NULL(mesh)) {
@@ -225,7 +224,19 @@ void CardboardLensDistortion_getDistortionMesh(
         return;
     }
 
-    *mesh = meshes[eye]->mesh->GetMesh();
+    cardboard::DistortionMesh* distortionMesh = meshes[
+        mesh->id
+    ]->mesh.get();
+
+    std::vector<int>* indices = distortionMesh->getIndices();
+    std::vector<float>* vertices = distortionMesh->getVertices();
+    std::vector<float>* uvs = distortionMesh->getUv();
+
+    mesh->indices = const_cast<int*>(indices->data());
+    mesh->vertices = const_cast<float*>(vertices->data());
+    mesh->uvs = const_cast<float*>(uvs->data());
+    mesh->n_indices = static_cast<int>(indices->size());
+    mesh->n_vertices = static_cast<int>(vertices->size() / 2);
 }
 
 CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(

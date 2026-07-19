@@ -33,7 +33,10 @@ class DistortionMesh {
                  float texture_width, float texture_height,
                  float x_eye_offset_texture, float y_eye_offset_texture);
   virtual ~DistortionMesh() = default;
-  CardboardMesh GetMesh() const;
+
+  std::vector<float>* getVertices();
+  std::vector<int>* getIndices();
+  std::vector<float>* getUv();
 
   Matrix4x4 eye_from_head_matrix_;
   std::array<float, 4> fov_;  // L, R, B, T

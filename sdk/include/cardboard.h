@@ -368,7 +368,7 @@ void CardboardLensDistortion_getFieldOfView(
 /// @param[in]      eye                     Desired eye.
 /// @param[out]     mesh                    Distortion mesh.
 void CardboardLensDistortion_getDistortionMesh(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye,
+    CardboardLensDistortion* lens_distortion,
     CardboardMesh* mesh);
 
 /// Applies lens inverse distortion function to a point normalized [0,1] in

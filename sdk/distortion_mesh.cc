@@ -112,14 +112,16 @@ DistortionMesh::DistortionMesh(
   }
 }
 
-CardboardMesh DistortionMesh::GetMesh() const {
-  CardboardMesh mesh;
-  mesh.indices = const_cast<int*>(index_data_.data());
-  mesh.vertices = const_cast<float*>(vertex_data_.data());
-  mesh.uvs = const_cast<float*>(uvs_data_.data());
-  mesh.n_indices = static_cast<int>(index_data_.size());
-  mesh.n_vertices = static_cast<int>(vertex_data_.size() / 2);
-  return mesh;
+std::vector<int>* DistortionMesh::getIndices() {
+    return &index_data_;
+}
+
+std::vector<float>* DistortionMesh::getVertices() {
+    return &vertex_data_;
+}
+
+std::vector<float>* DistortionMesh::getUv() {
+    return &uvs_data_;
 }
 
 }  // namespace cardboard
