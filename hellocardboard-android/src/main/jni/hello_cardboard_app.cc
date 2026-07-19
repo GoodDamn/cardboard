@@ -101,7 +101,8 @@ HelloCardboardApp::HelloCardboardApp(JavaVM* vm, jobject obj,
       target_object_meshes_(kTargetMeshCount),
       target_object_not_selected_textures_(kTargetMeshCount),
       target_object_selected_textures_(kTargetMeshCount),
-      cur_target_object_(RandomUniformInt(kTargetMeshCount)) {
+      cur_target_object_(RandomUniformInt(kTargetMeshCount)
+) {
   JNIEnv* env;
   vm->GetEnv((void**)&env, JNI_VERSION_1_6);
   java_asset_mgr_ = env->NewGlobalRef(asset_mgr_obj);
@@ -109,8 +110,10 @@ HelloCardboardApp::HelloCardboardApp(JavaVM* vm, jobject obj,
 
   Cardboard_initializeAndroid(vm, obj);
   head_tracker_ = CardboardHeadTracker_create();
-  CardboardHeadTracker_setLowPassFilter(head_tracker_,
-                                        kVelocityFilterCutoffFrequency);
+  CardboardHeadTracker_setLowPassFilter(
+      head_tracker_,
+      kVelocityFilterCutoffFrequency
+  );
 }
 
 HelloCardboardApp::~HelloCardboardApp() {
@@ -223,9 +226,15 @@ void HelloCardboardApp::OnDrawFrame() {
 
   // Render
   CardboardDistortionRenderer_renderEyeToDisplay(
-      distortion_renderer_, /* target_display = */ 0, /* x = */ 0, /* y = */ 0,
-      screen_width_, screen_height_, &left_eye_texture_description_,
-      &right_eye_texture_description_);
+      distortion_renderer_,
+      /* target_display = */ 0,
+      /* x = */ 0,
+      /* y = */ 0,
+      screen_width_,
+      screen_height_,
+      &mLeftEye,
+      &mRightEye
+  );
 
   CHECKGLERROR("onDrawFrame");
 }
@@ -253,8 +262,8 @@ bool HelloCardboardApp::UpdateDeviceParams() {
 
   CardboardLensDistortion_destroy(lens_distortion_);
   lens_distortion_ = CardboardLensDistortion_create(
-          mScreenWidthMeters,
-          mScreenHeightMeters
+      mScreenWidthMeters,
+      mScreenHeightMeters
   );
 
   GlSetup();
@@ -263,25 +272,80 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   const CardboardOpenGlEsDistortionRendererConfig config{kGlTexture2D};
   distortion_renderer_ = CardboardOpenGlEs3DistortionRenderer_create(&config);
 
-  CardboardMesh left_mesh;
-  CardboardMesh right_mesh;
-  CardboardLensDistortion_getDistortionMesh(lens_distortion_, kLeft,
-                                            &left_mesh);
-  CardboardLensDistortion_getDistortionMesh(lens_distortion_, kRight,
-                                            &right_mesh);
 
-  CardboardDistortionRenderer_setMesh(distortion_renderer_, &left_mesh, kLeft);
-  CardboardDistortionRenderer_setMesh(distortion_renderer_, &right_mesh, kRight);
+  mLeftEye.id = 0;
+  mRightEye.id = 1;
+
+  CardboardMesh localLeftMesh;
+  CardboardMesh localRightMesh;
+
+  CardboardLensDistortion_getDistortionMesh(
+      lens_distortion_,
+      kLeft,
+      &localLeftMesh
+  );
+
+  CardboardLensDistortion_getDistortionMesh(
+      lens_distortion_,
+      kRight,
+      &localRightMesh
+  );
+
+    mLeftEye.indices = localLeftMesh.indices;
+    mLeftEye.vertices = localLeftMesh.vertices;
+    mLeftEye.uvs = localLeftMesh.uvs;
+    mLeftEye.n_indices = localLeftMesh.n_indices;
+    mLeftEye.n_vertices = localLeftMesh.n_vertices;
+
+    mRightEye.indices = localRightMesh.indices;
+    mRightEye.vertices = localRightMesh.vertices;
+    mRightEye.uvs = localRightMesh.uvs;
+    mRightEye.n_indices = localRightMesh.n_indices;
+    mRightEye.n_vertices = localRightMesh.n_vertices;
+
+
+
+  LOGD("SetMesh:: LEFT_EYE: ID: %i", mLeftEye.id);
+  CardboardDistortionRenderer_setMesh(
+      distortion_renderer_,
+      &mLeftEye
+  );
+
+  LOGD("SetMesh:: RIGHT_EYE: ID: %i", mRightEye.id);
+
+  CardboardDistortionRenderer_setMesh(
+      distortion_renderer_,
+      &mRightEye
+  );
 
   // Get eye matrices
-  CardboardLensDistortion_getEyeFromHeadMatrix(lens_distortion_, kLeft,
-                                               eye_matrices_[0]);
-  CardboardLensDistortion_getEyeFromHeadMatrix(lens_distortion_, kRight,
-                                               eye_matrices_[1]);
-  CardboardLensDistortion_getProjectionMatrix(lens_distortion_, kLeft, kZNear,
-                                              kZFar, projection_matrices_[0]);
-  CardboardLensDistortion_getProjectionMatrix(lens_distortion_, kRight, kZNear,
-                                              kZFar, projection_matrices_[1]);
+  CardboardLensDistortion_getEyeFromHeadMatrix(
+      lens_distortion_,
+      kLeft,
+      eye_matrices_[0]
+  );
+
+  CardboardLensDistortion_getEyeFromHeadMatrix(
+      lens_distortion_,
+      kRight,
+      eye_matrices_[1]
+  );
+
+  CardboardLensDistortion_getProjectionMatrix(
+      lens_distortion_,
+      kLeft,
+      kZNear,
+      kZFar,
+      projection_matrices_[0]
+  );
+
+  CardboardLensDistortion_getProjectionMatrix(
+      lens_distortion_,
+      kRight,
+      kZNear,
+      kZFar,
+      projection_matrices_[1]
+  );
 
   screen_params_changed_ = false;
   device_params_changed_ = false;
@@ -309,17 +373,17 @@ void HelloCardboardApp::GlSetup() {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width_, screen_height_, 0,
                GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-  left_eye_texture_description_.texture = texture_;
-  left_eye_texture_description_.left_u = 0;
-  left_eye_texture_description_.right_u = 0.5;
-  left_eye_texture_description_.top_v = 1;
-  left_eye_texture_description_.bottom_v = 0;
+  mLeftEye.textureDescription.texture = texture_;
+  mLeftEye.textureDescription.left_u = 0;
+  mLeftEye.textureDescription.right_u = 0.5;
+  mLeftEye.textureDescription.top_v = 1;
+  mLeftEye.textureDescription.bottom_v = 0;
 
-  right_eye_texture_description_.texture = texture_;
-  right_eye_texture_description_.left_u = 0.5;
-  right_eye_texture_description_.right_u = 1;
-  right_eye_texture_description_.top_v = 1;
-  right_eye_texture_description_.bottom_v = 0;
+  mRightEye.textureDescription.texture = texture_;
+  mRightEye.textureDescription.left_u = 0.5;
+  mRightEye.textureDescription.right_u = 1;
+  mRightEye.textureDescription.top_v = 1;
+  mRightEye.textureDescription.bottom_v = 0;
 
   // Generate depth buffer to perform depth test.
   glGenRenderbuffers(1, &depthRenderBuffer_);

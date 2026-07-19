@@ -75,6 +75,53 @@ typedef enum CardboardSupportedOpenGlEsTextureType {
   kGlTextureExternalOes = 1,
 } CardboardSupportedOpenGlEsTextureType;
 
+/// Struct to hold information about an eye texture.
+typedef struct CardboardEyeTextureDescription {
+    /// The texture with eye pixels.
+    ///
+    /// When using OpenGL ES 2.x and OpenGL ES 3.x, this field corresponds to a
+    /// GLuint variable.
+    ///
+    /// When using Vulkan, this field corresponds to an uint64_t address pointing
+    /// to a @c VkImage variable.The SDK client is expected to manage the
+    /// object ownership and to guarantee the pointer validity during the
+    /// @c ::CardboardDistortionRenderer_renderEyeToDisplay function execution
+    /// to ensure it is properly retained. Usage example:
+    ///
+    /// @code{.cc}
+    /// VkImage image;
+    /// // Initialize and set up the image...
+    /// CardboardEyeTextureDescription leftEye;
+    /// leftEye.texture = reinterpret_cast<uint64_t>(image)
+    /// // Fill remaining fields in leftEye...
+    /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
+    /// // Clear previous image if it is needed.
+    /// @endcode
+    ///
+    /// When using Metal, this field corresponds to a @c CFTypeRef
+    /// variable pointing to a @c MTLTexture object. The SDK client is expected
+    /// to manage the object ownership and to guarantee the pointer validity
+    /// during the @c ::CardboardDistortionRenderer_renderEyeToDisplay function
+    /// execution to ensure it is properly retained. Usage example:
+    ///
+    /// @code{.m}
+    /// CardboardEyeTextureDescription leftEye;
+    /// leftEye.texture = CFBridgingRetain(_texture);
+    /// // Fill remaining fields in leftEye...
+    /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
+    /// CFBridgingRelease(leftEye.texture);
+    /// @endcode
+    uint64_t texture;
+    /// u coordinate of the left side of the eye.
+    float left_u;
+    /// u coordinate of the right side of the eye.
+    float right_u;
+    /// v coordinate of the top side of the eye.
+    float top_v;
+    /// v coordinate of the bottom side of the eye.
+    float bottom_v;
+} CardboardEyeTextureDescription;
+
 /// Struct representing a 3D mesh with 3D vertices and corresponding UV
 /// coordinates.
 typedef struct CardboardMesh {
@@ -88,54 +135,10 @@ typedef struct CardboardMesh {
   float* uvs;
   /// Number of vertices.
   int n_vertices;
-} CardboardMesh;
+  uint8_t id;
 
-/// Struct to hold information about an eye texture.
-typedef struct CardboardEyeTextureDescription {
-  /// The texture with eye pixels.
-  ///
-  /// When using OpenGL ES 2.x and OpenGL ES 3.x, this field corresponds to a
-  /// GLuint variable.
-  ///
-  /// When using Vulkan, this field corresponds to an uint64_t address pointing
-  /// to a @c VkImage variable.The SDK client is expected to manage the
-  /// object ownership and to guarantee the pointer validity during the
-  /// @c ::CardboardDistortionRenderer_renderEyeToDisplay function execution
-  /// to ensure it is properly retained. Usage example:
-  ///
-  /// @code{.cc}
-  /// VkImage image;
-  /// // Initialize and set up the image...
-  /// CardboardEyeTextureDescription leftEye;
-  /// leftEye.texture = reinterpret_cast<uint64_t>(image)
-  /// // Fill remaining fields in leftEye...
-  /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
-  /// // Clear previous image if it is needed.
-  /// @endcode
-  ///
-  /// When using Metal, this field corresponds to a @c CFTypeRef
-  /// variable pointing to a @c MTLTexture object. The SDK client is expected
-  /// to manage the object ownership and to guarantee the pointer validity
-  /// during the @c ::CardboardDistortionRenderer_renderEyeToDisplay function
-  /// execution to ensure it is properly retained. Usage example:
-  ///
-  /// @code{.m}
-  /// CardboardEyeTextureDescription leftEye;
-  /// leftEye.texture = CFBridgingRetain(_texture);
-  /// // Fill remaining fields in leftEye...
-  /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
-  /// CFBridgingRelease(leftEye.texture);
-  /// @endcode
-  uint64_t texture;
-  /// u coordinate of the left side of the eye.
-  float left_u;
-  /// u coordinate of the right side of the eye.
-  float right_u;
-  /// v coordinate of the top side of the eye.
-  float top_v;
-  /// v coordinate of the bottom side of the eye.
-  float bottom_v;
-} CardboardEyeTextureDescription;
+  CardboardEyeTextureDescription textureDescription;
+} CardboardMesh;
 
 /// Struct to set OpenGL ES distortion renderer configuration.
 typedef struct CardboardOpenGlEsDistortionRendererConfig {
@@ -191,29 +194,6 @@ typedef struct CardboardVulkanDistortionRendererConfig {
   /// Maintained by the user.
   uint64_t vk_swapchain;
 } CardboardVulkanDistortionRendererConfig;
-
-/// Struct to set Metal distortion renderer target configuration.
-typedef struct CardboardMetalDistortionRendererTargetConfig {
-  /// MTLRenderCommandEncoder id.
-  /// This field holds a CFTypeRef variable pointing to a
-  /// @c MTLRenderCommandEncoder object. The SDK client is expected to manage
-  /// the object ownership and to guarantee the pointer validity during the
-  /// @c ::CardboardDistortionRenderer_renderEyeToDisplay function execution to
-  /// ensure it is properly retained. Usage example:
-  ///
-  /// @code{.m}
-  /// CardboardMetalDistortionRendererTargetConfig target_config;
-  /// target_config.render_command_encoder =
-  ///     CFBridgingRetain(renderCommandEncoder);
-  /// CardboardDistortionRenderer_renderEyeToDisplay(..., &target_config, ...);
-  /// CFBridgingRelease(target_config.render_command_encoder);
-  /// @endcode
-  uint64_t render_command_encoder;
-  /// Full width of the screen in pixels.
-  int screen_width;
-  /// Full height of the screen in pixels.
-  int screen_height;
-} CardboardMetalDistortionRendererTargetConfig;
 
 /// Struct to set Vulkan distortion renderer target.
 typedef struct CardboardVulkanDistortionRendererTarget {
@@ -459,9 +439,10 @@ CardboardDistortionRenderer* CardboardVulkanDistortionRenderer_create(
 /// @param[in]      renderer                Distortion renderer object pointer.
 void CardboardDistortionRenderer_destroy(CardboardDistortionRenderer* renderer);
 
-void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
-                                         const CardboardMesh* mesh,
-                                         CardboardEye eye);
+void CardboardDistortionRenderer_setMesh(
+    CardboardDistortionRenderer* renderer,
+    const CardboardMesh* mesh
+);
 
 /// Renders eye textures to a rectangle in the display. Must be called from
 /// render thread.
@@ -492,9 +473,15 @@ void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
 /// @param[in]      left_eye                Left eye texture description.
 /// @param[in]      right_eye               Right eye texture description.
 void CardboardDistortionRenderer_renderEyeToDisplay(
-    CardboardDistortionRenderer* renderer, uint64_t target, int x, int y,
-    int width, int height, const CardboardEyeTextureDescription* left_eye,
-    const CardboardEyeTextureDescription* right_eye);
+    CardboardDistortionRenderer* renderer,
+    uint64_t target,
+    int x,
+    int y,
+    int width,
+    int height,
+    const CardboardMesh* left_eye,
+    const CardboardMesh* right_eye
+);
 
 /// @}
 

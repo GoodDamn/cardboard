@@ -165,8 +165,8 @@ class HelloCardboardApp {
   CardboardLensDistortion* lens_distortion_;
   CardboardDistortionRenderer* distortion_renderer_;
 
-  CardboardEyeTextureDescription left_eye_texture_description_;
-  CardboardEyeTextureDescription right_eye_texture_description_;
+  CardboardMesh mLeftEye;
+  CardboardMesh mRightEye;
 
   bool screen_params_changed_;
   bool device_params_changed_;

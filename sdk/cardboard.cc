@@ -296,26 +296,49 @@ void CardboardDistortionRenderer_destroy(
 
 void CardboardDistortionRenderer_setMesh(
     CardboardDistortionRenderer *renderer,
-    const CardboardMesh *mesh,
-    CardboardEye eye
+    const CardboardMesh *mesh
 ) {
-    if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(renderer) ||
-        CARDBOARD_IS_ARG_NULL(mesh)) {
+    if (CARDBOARD_IS_NOT_INITIALIZED() ||
+        CARDBOARD_IS_ARG_NULL(renderer) ||
+        CARDBOARD_IS_ARG_NULL(mesh)
+    ) {
         return;
     }
-    static_cast<cardboard::DistortionRenderer *>(renderer)->SetMesh(mesh, eye);
+
+    static_cast<cardboard::DistortionRenderer *>(renderer)->SetMesh(
+        mesh
+    );
 }
 
 void CardboardDistortionRenderer_renderEyeToDisplay(
-    CardboardDistortionRenderer *renderer, uint64_t target, int x, int y,
-    int width, int height, const CardboardEyeTextureDescription *left_eye,
-    const CardboardEyeTextureDescription *right_eye) {
-    if (CARDBOARD_IS_NOT_INITIALIZED() || CARDBOARD_IS_ARG_NULL(renderer) ||
-        CARDBOARD_IS_ARG_NULL(left_eye) || CARDBOARD_IS_ARG_NULL(right_eye)) {
+    CardboardDistortionRenderer *renderer,
+    uint64_t target,
+    int x,
+    int y,
+    int width,
+    int height,
+    const CardboardMesh *left_eye,
+    const CardboardMesh *right_eye
+) {
+    if (CARDBOARD_IS_NOT_INITIALIZED() ||
+        CARDBOARD_IS_ARG_NULL(renderer) ||
+        CARDBOARD_IS_ARG_NULL(left_eye) ||
+        CARDBOARD_IS_ARG_NULL(right_eye)
+    ) {
         return;
     }
-    static_cast<cardboard::DistortionRenderer *>(renderer)->RenderEyeToDisplay(
-        target, x, y, width, height, left_eye, right_eye);
+
+    static_cast<cardboard::DistortionRenderer *>(
+        renderer
+    )->RenderEyeToDisplay(
+        target,
+        x,
+        y,
+        width,
+        height,
+        left_eye,
+        right_eye
+    );
 }
 
 CardboardHeadTracker *CardboardHeadTracker_create() {

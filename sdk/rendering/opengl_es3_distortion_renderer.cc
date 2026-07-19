@@ -166,14 +166,38 @@ namespace cardboard::rendering {
 
 // @brief OpenGL ES 3.0 concrete implementation of DistortionRenderer.
 class OpenGlEs3DistortionRenderer : public DistortionRenderer {
- public:
+
+private:
+    struct GLEye {
+        GLuint vertices_vbo_;
+        GLuint uvs_vbo_;
+        GLuint elements_vbo;
+        int elements_count;
+    };
+
+    GLEye mRenderEyes[2];
+
+    void generateBuffersEye(
+        GLEye* eye
+    ) {
+        glGenBuffers(1, &eye->vertices_vbo_);
+        glGenBuffers(1, &eye->uvs_vbo_);
+        glGenBuffers(1, &eye->elements_vbo);
+    }
+
+    void deleteBuffersEye(
+        GLEye* eye
+    ) {
+        glDeleteBuffers(1, &eye->vertices_vbo_);
+        glDeleteBuffers(1, &eye->uvs_vbo_);
+        glDeleteBuffers(1, &eye->elements_vbo);
+    }
+
+public:
   OpenGlEs3DistortionRenderer(
-      const CardboardOpenGlEsDistortionRendererConfig* config)
-      : vertices_vbo_{0, 0},
-        uvs_vbo_{0, 0},
-        elements_vbo_{0, 0},
-        elements_count_{0, 0},
-        eye_texture_type_{GL_TEXTURE_2D} {
+      const CardboardOpenGlEsDistortionRendererConfig* config
+  ): eye_texture_type_{GL_TEXTURE_2D} {
+
     const char* fragment_shader;
 
     switch (config->texture_type) {
@@ -204,17 +228,22 @@ class OpenGlEs3DistortionRenderer : public DistortionRenderer {
     uniform_end_ = glGetUniformLocation(program_, "u_End");
 
     // Gen buffers, one per eye.
-    glGenBuffers(2, &vertices_vbo_[0]);
-    glGenBuffers(2, &uvs_vbo_[0]);
-    glGenBuffers(2, &elements_vbo_[0]);
+    for (uint8_t i = 0; i < 2; i++) {
+        generateBuffersEye(
+            &mRenderEyes[i]
+        );
+    }
+
     CheckGlError("OpenGlEs3DistortionRendererSetUp");
   }
 
   ~OpenGlEs3DistortionRenderer() {
-    glDeleteBuffers(2, &vertices_vbo_[0]);
-    glDeleteBuffers(2, &uvs_vbo_[0]);
-    glDeleteBuffers(2, &elements_vbo_[0]);
-    CheckGlError("~OpenGlEs3DistortionRenderer");
+      for (uint8_t i = 0; i < 2; i++) {
+          deleteBuffersEye(
+              &mRenderEyes[i]
+          );
+      }
+      CheckGlError("~OpenGlEs3DistortionRenderer");
   }
 
   /*
@@ -222,23 +251,52 @@ class OpenGlEs3DistortionRenderer : public DistortionRenderer {
    *   - glGet(GL_ARRAY_BUFFER_BINDING)
    *   - glGet(GL_ELEMENT_ARRAY_BUFFER_BINDING)
    */
-  void SetMesh(const CardboardMesh* mesh, CardboardEye eye) override {
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo_[eye]);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        mesh->n_vertices * sizeof(float) * 2,  // Two components per vertex
-        mesh->vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, uvs_vbo_[eye]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 mesh->n_vertices * sizeof(float) * 2,  // Two components per uv
-                 mesh->uvs, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elements_vbo_[eye]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->n_indices * sizeof(int),
-                 mesh->indices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    CheckGlError("OpenGlEs3DistortionRenderer::SetMesh");
-    elements_count_[eye] = mesh->n_indices;
+  void SetMesh(
+      const CardboardMesh *mesh
+  ) override {
+      CARDBOARD_LOGD("SetMesh: ID: %i;;;;n_vertices: %i",mesh->id, mesh->n_vertices);
+      GLEye* eye = &mRenderEyes[mesh->id];
+
+      glBindBuffer(
+          GL_ARRAY_BUFFER,
+          eye->vertices_vbo_
+      );
+
+      glBufferData(
+          GL_ARRAY_BUFFER,
+          mesh->n_vertices * sizeof(float) * 2,  // Two components per vertex
+          mesh->vertices,
+          GL_STATIC_DRAW
+      );
+
+      glBindBuffer(
+          GL_ARRAY_BUFFER,
+          eye->uvs_vbo_
+      );
+
+      glBufferData(
+          GL_ARRAY_BUFFER,
+          mesh->n_vertices * sizeof(float) * 2,  // Two components per uv
+          mesh->uvs,
+          GL_STATIC_DRAW
+      );
+
+      glBindBuffer(
+          GL_ELEMENT_ARRAY_BUFFER,
+          eye->elements_vbo
+      );
+
+      glBufferData(
+          GL_ELEMENT_ARRAY_BUFFER,
+          mesh->n_indices * sizeof(int),
+          mesh->indices,
+          GL_STATIC_DRAW
+      );
+
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+      CheckGlError("OpenGlEs3DistortionRenderer::SetMesh");
+      eye->elements_count = mesh->n_indices;
   }
 
   /*
@@ -255,44 +313,58 @@ class OpenGlEs3DistortionRenderer : public DistortionRenderer {
    *   - glGet(GL_ELEMENT_ARRAY_BUFFER_BINDING)
    */
   void RenderEyeToDisplay(
-      uint64_t target, int x, int y, int width, int height,
-      const CardboardEyeTextureDescription* left_eye,
-      const CardboardEyeTextureDescription* right_eye) override {
-    if (elements_count_[0] == 0 || elements_count_[1] == 0) {
-      CARDBOARD_LOGE(
-          "Distortion mesh is empty. OpenGlEs3DistortionRenderer::SetMesh was "
-          "not called yet.");
-      return;
-    }
+      uint64_t target,
+      int x,
+      int y,
+      int width,
+      int height,
+      const CardboardMesh *left_eye,
+      const CardboardMesh *right_eye
+  ) override {
 
-    glViewport(x, y, width, height);
-    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(target));
-    glDisable(GL_SCISSOR_TEST);
-    glDisable(GL_CULL_FACE);
-    glClearColor(.0f, .0f, .0f, 1.0f);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      for (uint8_t i = 0; i < 2; i++) {
+          if (mRenderEyes[i].elements_count == 0) {
+              CARDBOARD_LOGE(
+                  "Distortion mesh is empty. OpenGlEs3DistortionRenderer::SetMesh was "
+                  "not called yet.");
+              return;
+          }
+      }
 
-    glUseProgram(program_);
+      glViewport(x, y, width, height);
+      glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(target));
+      glDisable(GL_SCISSOR_TEST);
+      glDisable(GL_CULL_FACE);
+      glClearColor(.0f, .0f, .0f, 1.0f);
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(x, y, width / 2, height);
-    RenderDistortionMesh(left_eye, kLeft);
+      glUseProgram(program_);
 
-    glScissor(x + width / 2, y, width / 2, height);
-    RenderDistortionMesh(right_eye, kRight);
+      glEnable(GL_SCISSOR_TEST);
+      glScissor(x, y, width / 2, height);
+      RenderDistortionMesh(
+          &mRenderEyes[left_eye->id],
+          left_eye
+      );
 
-    // Active GL_TEXTURE0 effectively enables the first texture that is
-    // deactiviated by the DistortionRenderer. Binding array buffer and element
-    // array buffer to the reserved value zero effectively unbinds the buffer
-    // objects that are previously bound by the DistortionRenderer.
-    glActiveTexture(GL_TEXTURE0);
+      glScissor(x + width / 2, y, width / 2, height);
+      RenderDistortionMesh(
+          &mRenderEyes[right_eye->id],
+          right_eye
+      );
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+      // Active GL_TEXTURE0 effectively enables the first texture that is
+      // deactiviated by the DistortionRenderer. Binding array buffer and element
+      // array buffer to the reserved value zero effectively unbinds the buffer
+      // objects that are previously bound by the DistortionRenderer.
+      glActiveTexture(GL_TEXTURE0);
 
-    // Disable scissor test.
-    glDisable(GL_SCISSOR_TEST);
-    CheckGlError("OpenGlEs3DistortionRenderer::RenderEyeToDisplay");
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+      // Disable scissor test.
+      glDisable(GL_SCISSOR_TEST);
+      CheckGlError("OpenGlEs3DistortionRenderer::RenderEyeToDisplay");
   }
 
  private:
@@ -309,49 +381,78 @@ class OpenGlEs3DistortionRenderer : public DistortionRenderer {
    *   - glGet(GL_ELEMENT_ARRAY_BUFFER_BINDING)
    */
   void RenderDistortionMesh(
-      const CardboardEyeTextureDescription* eye_description,
-      CardboardEye eye) const {
-    glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo_[eye]);
-    glVertexAttribPointer(
-        attrib_pos_,
-        2,  // 2 components per vertex
-        GL_FLOAT, false,
-        0,  // Stride and offset 0, as we are using different vbos.
-        0);
-    glEnableVertexAttribArray(attrib_pos_);
+      const GLEye *eye,
+      const CardboardMesh* eyeMesh
+  ) const {
+      glBindBuffer(
+          GL_ARRAY_BUFFER,
+          eye->vertices_vbo_
+      );
 
-    glBindBuffer(GL_ARRAY_BUFFER, uvs_vbo_[eye]);
-    glVertexAttribPointer(attrib_tex_,
-                          2,  // 2 components per uv
-                          GL_FLOAT, false, 0, 0);
-    glEnableVertexAttribArray(attrib_tex_);
+      glVertexAttribPointer(
+          attrib_pos_,
+          2,  // 2 components per vertex
+          GL_FLOAT, false,
+          0,  // Stride and offset 0, as we are using different vbos.
+          0
+      );
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(eye_texture_type_,
-                  static_cast<GLuint>(eye_description->texture));
+      glEnableVertexAttribArray(
+          attrib_pos_
+      );
 
-    glUniform2f(uniform_start_, eye_description->left_u,
-                eye_description->bottom_v);
-    glUniform2f(uniform_end_, eye_description->right_u, eye_description->top_v);
+      glBindBuffer(
+          GL_ARRAY_BUFFER,
+          eye->uvs_vbo_
+      );
 
-    // Draw with indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elements_vbo_[eye]);
-    glDrawElements(GL_TRIANGLE_STRIP, elements_count_[eye], GL_UNSIGNED_INT, 0);
-    CheckGlError("OpenGlEs3DistortionRenderer::RenderDistortionMesh");
+      glVertexAttribPointer(
+          attrib_tex_,
+          2,  // 2 components per uv
+          GL_FLOAT,
+          false,
+          0,
+          0
+      );
+
+      glEnableVertexAttribArray(
+          attrib_tex_
+      );
+
+      glActiveTexture(
+          GL_TEXTURE0
+      );
+
+      glBindTexture(
+          eye_texture_type_,
+          static_cast<GLuint>(eyeMesh->textureDescription.texture)
+      );
+
+      glUniform2f(
+          uniform_start_,
+          eyeMesh->textureDescription.left_u,
+          eyeMesh->textureDescription.bottom_v
+      );
+
+      glUniform2f(
+          uniform_end_,
+          eyeMesh->textureDescription.right_u,
+          eyeMesh->textureDescription.top_v
+      );
+
+      // Draw with indices
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eye->elements_vbo);
+      glDrawElements(GL_TRIANGLE_STRIP, eye->elements_count, GL_UNSIGNED_INT, 0);
+      CheckGlError("OpenGlEs3DistortionRenderer::RenderDistortionMesh");
   }
 
-  std::array<GLuint, 2> vertices_vbo_;  // One per eye.
-  std::array<GLuint, 2> uvs_vbo_;
-  std::array<GLuint, 2> elements_vbo_;
-  std::array<int, 2> elements_count_;
+    GLuint program_;
+    GLuint attrib_pos_;
+    GLuint attrib_tex_;
+    GLuint uniform_start_;
+    GLuint uniform_end_;
 
-  GLuint program_;
-  GLuint attrib_pos_;
-  GLuint attrib_tex_;
-  GLuint uniform_start_;
-  GLuint uniform_end_;
-
-  GLenum eye_texture_type_;
+    GLenum eye_texture_type_;
 };
 
 }  // namespace cardboard::rendering
