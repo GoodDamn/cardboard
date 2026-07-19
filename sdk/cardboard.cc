@@ -18,7 +18,6 @@
 #include <cmath>
 
 #include "distortion_renderer.h"
-#include "distortion_eyes.h"
 #include "head_tracker.h"
 #include "lens_distortion.h"
 #include "util/is_arg_null.h"
@@ -26,7 +25,7 @@
 #include "util/logging.h"
 
 #ifdef __ANDROID__
-#include "device_params/android/device_params.h"
+#include "include/device_params.h"
 #include "jni_utils/android/jni_utils.h"
 #endif
 
@@ -103,11 +102,7 @@ namespace {
 
 extern "C" {
 
-std::vector<
-    std::unique_ptr<
-        cardboard::CBDistortionMesh
-    >
-> meshes;
+std::vector<CBMesh*>* _meshes;
 
 #ifdef __ANDROID__
 void Cardboard_initializeAndroid(JavaVM *vm, jobject context) {
@@ -124,23 +119,15 @@ void Cardboard_initializeAndroid(JavaVM *vm, jobject context) {
 }
 #endif
 
-CardboardLensDistortion *CardboardLensDistortion_create(
+CardboardLensDistortion* CardboardLensDistortion_create(
     float screenWidthMeters,
-    float screenHeightMeters
+    float screenHeightMeters,
+    std::vector<CBMesh*>* meshes
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED()) {
         return nullptr;
     }
-
-    meshes.clear();
-
-    meshes.push_back(
-        std::make_unique<cardboard::CBDistortionMeshEyeLeft>()
-    );
-
-    meshes.push_back(
-        std::make_unique<cardboard::CBDistortionMeshEyeRight>()
-    );
+    _meshes = meshes;
 
     return reinterpret_cast<CardboardLensDistortion*>(
         new cardboard::LensDistortion(
@@ -170,7 +157,7 @@ void CardboardLensDistortion_getEyeFromHeadMatrix(
         return;
     }
 
-    meshes[mesh->id]->matrix.getHeadMatrix(
+    _meshes->operator[](mesh->id)->meshDistortion->matrix.getHeadMatrix(
         mesh->eye_matrix
     );
 }
@@ -188,7 +175,7 @@ void CardboardLensDistortion_getProjectionMatrix(
         return;
     }
 
-    meshes[mesh->id]->matrix.getProjectionMatrix(
+    _meshes->operator[](mesh->id)->meshDistortion->matrix.getProjectionMatrix(
         z_near,
         z_far,
         mesh->projection_matrix
@@ -207,7 +194,7 @@ void CardboardLensDistortion_getFieldOfView(
         return;
     }
 
-    meshes[mesh->id]->matrix.getFov(
+    _meshes->operator[](mesh->id)->meshDistortion->matrix.getFov(
         field_of_view
     );
 }
@@ -222,9 +209,9 @@ void CardboardLensDistortion_getDistortionMesh(
         return;
     }
 
-    cardboard::DistortionMesh* distortionMesh = meshes[
+    cardboard::DistortionMesh* distortionMesh = _meshes->operator[](
         mesh->id
-    ]->mesh.get();
+    )->meshDistortion->mesh.get();
 
     std::vector<int>* indices = distortionMesh->getIndices();
     std::vector<float>* vertices = distortionMesh->getVertices();
@@ -269,8 +256,8 @@ void CardboardDistortionRenderer_renderEyeToDisplay(
     int y,
     int width,
     int height,
-    const CardboardMesh *left_eye,
-    const CardboardMesh *right_eye
+    CardboardMesh *left_eye,
+    CardboardMesh *right_eye
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED() ||
         CARDBOARD_IS_ARG_NULL(renderer) ||

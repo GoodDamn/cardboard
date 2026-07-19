@@ -21,7 +21,7 @@
 #include <cstring>
 #include <memory>
 #include <vector>
-#include "viewport_params.h"
+#include "include/viewport_params.h"
 
 
 #include "include/cardboard.h"
@@ -33,14 +33,14 @@ namespace cardboard {
     LensDistortion::LensDistortion(
         float screenWidthMeters,
         float screenHeightMeters,
-        std::vector<std::unique_ptr<CBDistortionMesh>>& meshes
+        std::vector<CBMesh*>* meshes
     ) : screen_width_meters_(
         screenWidthMeters
     ), screen_height_meters_(
         screenHeightMeters
     ) {
-        for (const auto & meshe : meshes) {
-            meshe->calculateHeadMatrix(
+        for (const auto & meshe : *meshes) {
+            meshe->meshDistortion->calculateHeadMatrix(
                 device_params_.inter_lens_distance()
             );
         }
@@ -62,14 +62,14 @@ namespace cardboard {
 
         int i = 0;
         float yOffsetMeters = GetYEyeOffsetMeters();
-        for (const auto & meshe : meshes) {
-            meshe->calculateFov(
+        for (const auto & meshe : *meshes) {
+            meshe->meshDistortion->calculateFov(
                 calculatedFov
             );
 
             ViewportParams paramsScreen, paramsTexture;
 
-            meshe->calculateScreenParams(
+            meshe->meshDistortion->calculateScreenParams(
                 &device_params_,
                 screenWidthMeters,
                 screenHeightMeters,
@@ -77,11 +77,11 @@ namespace cardboard {
                 &paramsScreen
             );
 
-            meshe->calculateTextureParams(
+            meshe->meshDistortion->calculateTextureParams(
                 &paramsTexture
             );
 
-            meshe->mesh = std::make_unique<DistortionMesh>(
+            meshe->meshDistortion->mesh = std::make_unique<DistortionMesh>(
                 *distortion_,
                 paramsScreen.width,
                 paramsScreen.height,

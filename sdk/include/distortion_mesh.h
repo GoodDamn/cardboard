@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARDBOARD_SDK_DISTORTION_MESH_H_
-#define CARDBOARD_SDK_DISTORTION_MESH_H_
+#ifndef CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_H_
+#define CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_H_
 
 #include <vector>
 
-#include "include/cardboard.h"
 #include "polynomial_radial_distortion.h"
-#include "util/matrix_4x4.h"
+#include "matrix_4x4.h"
 
 namespace cardboard {
 
@@ -50,4 +49,4 @@ class DistortionMesh {
 
 }  // namespace cardboard
 
-#endif  // CARDBOARD_SDK_DISTORTION_MESH_H_
+#endif  // CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_H_

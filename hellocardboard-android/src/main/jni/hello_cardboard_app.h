@@ -28,6 +28,7 @@
 #include <GLES2/gl2.h>
 #include "cardboard.h"
 #include "util.h"
+#include "distortion_eyes.h"
 
 namespace ndk_hello_cardboard {
 
@@ -36,6 +37,7 @@ namespace ndk_hello_cardboard {
  * objects that you can click on.
  */
 class HelloCardboardApp {
+    std::vector<CBMesh*> meshes;
  public:
   /**
    * Creates a HelloCardboardApp.
@@ -168,9 +170,6 @@ class HelloCardboardApp {
   CardboardHeadTracker* head_tracker_;
   CardboardLensDistortion* lens_distortion_;
   CardboardDistortionRenderer* distortion_renderer_;
-
-  CardboardMesh mLeftEye;
-  CardboardMesh mRightEye;
 
   bool screen_params_changed_;
   bool device_params_changed_;

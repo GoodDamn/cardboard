@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "distortion_mesh.h"
+#include "include/distortion_mesh.h"
 
 #include <vector>
-
-#include "include/cardboard.h"
 
 namespace cardboard {
 

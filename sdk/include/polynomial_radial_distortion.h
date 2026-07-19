@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARDBOARD_SDK_POLYNOMIAL_RADIAL_DISTORTION_H_
-#define CARDBOARD_SDK_POLYNOMIAL_RADIAL_DISTORTION_H_
+#ifndef CARDBOARD_SDK_INCLUDE_POLYNOMIAL_RADIAL_DISTORTION_H_
+#define CARDBOARD_SDK_INCLUDE_POLYNOMIAL_RADIAL_DISTORTION_H_
 
 #include <array>
 #include <vector>
@@ -70,4 +70,4 @@ class PolynomialRadialDistortion {
 
 }  // namespace cardboard
 
-#endif  // CARDBOARD_SDK_POLYNOMIAL_RADIAL_DISTORTION_H_
+#endif  // CARDBOARD_SDK_INCLUDE_POLYNOMIAL_RADIAL_DISTORTION_H_

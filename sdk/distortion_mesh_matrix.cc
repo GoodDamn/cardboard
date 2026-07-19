@@ -8,10 +8,9 @@
 #endif //CARDBOARD_DISTORTION_MESH_MATRIX_H
 
 #include <array>
-#include "include/cardboard.h"
-#include "util/matrix_4x4.h"
-#include "distortion_mesh_matrix.h"
-#include "distortion_mesh.h"
+#include "include/matrix_4x4.h"
+#include "include/distortion_mesh_matrix.h"
+#include "include/distortion_mesh.h"
 
 namespace cardboard {
 

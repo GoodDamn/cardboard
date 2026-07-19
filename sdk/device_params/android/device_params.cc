@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "device_params/android/device_params.h"
+#include "include/device_params.h"
 
 #include <jni.h>
 

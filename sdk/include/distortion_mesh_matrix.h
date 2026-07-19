@@ -2,15 +2,14 @@
 // Created by gooddamn on 6/12/26.
 //
 
-#ifndef CARDBOARD_SDK_DISTORTION_MESH_MATRIX_H
-#define CARDBOARD_SDK_DISTORTION_MESH_MATRIX_H
+#ifndef CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_MATRIX_H
+#define CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_MATRIX_H
 
 #include <array>
-#include "include/cardboard.h"
-#include "util/matrix_4x4.h"
+#include "matrix_4x4.h"
 #include "distortion_mesh.h"
 #include "viewport_params.h"
-#include "device_params/android/device_params.h"
+#include "device_params.h"
 
 namespace cardboard {
     struct CBDistortionMeshMatrix {
@@ -62,4 +61,4 @@ namespace cardboard {
 
 }
 
-#endif //CARDBOARD_SDK_DISTORTION_MESH_MATRIX_H
+#endif //CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_MATRIX_H

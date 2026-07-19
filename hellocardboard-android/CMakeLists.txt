@@ -34,8 +34,12 @@ set(CARDBOARD_INCLUDE_DIR ${libs_dir})
 # === Cardboard Sample ===
 # Sources
 file(GLOB native_srcs "src/main/jni/*.cc")
+file(GLOB eyes "src/main/jni/distortion_eyes.cc")
 # Output binary
-add_library(cardboard_jni SHARED ${native_srcs})
+add_library(cardboard_jni SHARED
+        ${native_srcs}
+        ${eyes}
+)
 # Includes
 target_include_directories(cardboard_jni PRIVATE ${CARDBOARD_INCLUDE_DIR})
 # Build

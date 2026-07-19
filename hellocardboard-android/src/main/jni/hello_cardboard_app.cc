@@ -103,17 +103,36 @@ HelloCardboardApp::HelloCardboardApp(JavaVM* vm, jobject obj,
       target_object_selected_textures_(kTargetMeshCount),
       cur_target_object_(RandomUniformInt(kTargetMeshCount)
 ) {
-  JNIEnv* env;
-  vm->GetEnv((void**)&env, JNI_VERSION_1_6);
-  java_asset_mgr_ = env->NewGlobalRef(asset_mgr_obj);
-  asset_mgr_ = AAssetManager_fromJava(env, asset_mgr_obj);
+    meshes.clear();
 
-  Cardboard_initializeAndroid(vm, obj);
-  head_tracker_ = CardboardHeadTracker_create();
-  CardboardHeadTracker_setLowPassFilter(
-      head_tracker_,
-      kVelocityFilterCutoffFrequency
-  );
+    auto* meshLeft = new CBMesh();
+    auto* meshRight = new CBMesh();
+
+    meshLeft->meshDistortion = std::make_unique<CBDistortionMeshEyeLeft>();
+    meshRight->meshDistortion = std::make_unique<CBDistortionMeshEyeRight>();
+
+    meshLeft->meshRender = new CardboardMesh();
+    meshRight->meshRender = new CardboardMesh();
+
+    meshes.push_back(
+        meshLeft
+    );
+
+    meshes.push_back(
+        meshRight
+    );
+
+    JNIEnv* env;
+    vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+    java_asset_mgr_ = env->NewGlobalRef(asset_mgr_obj);
+    asset_mgr_ = AAssetManager_fromJava(env, asset_mgr_obj);
+
+    Cardboard_initializeAndroid(vm, obj);
+    head_tracker_ = CardboardHeadTracker_create();
+    CardboardHeadTracker_setLowPassFilter(
+        head_tracker_,
+        kVelocityFilterCutoffFrequency
+    );
 }
 
 HelloCardboardApp::~HelloCardboardApp() {
@@ -232,8 +251,9 @@ void HelloCardboardApp::OnDrawFrame() {
         screen_height_
     );
 
+    LOGD("HelloCardboardApp: DRAW FRAME");
     calculateDrawMatrices(
-        &mLeftEye
+        meshes[0]->meshRender
     );
 
     // Draw room and target
@@ -249,7 +269,7 @@ void HelloCardboardApp::OnDrawFrame() {
     );
 
     calculateDrawMatrices(
-        &mRightEye
+        meshes[1]->meshRender
     );
 
     // Draw room and target
@@ -263,8 +283,8 @@ void HelloCardboardApp::OnDrawFrame() {
         /* y = */ 0,
         screen_width_,
         screen_height_,
-        &mLeftEye,
-        &mRightEye
+        meshes[0]->meshRender,
+        meshes[1]->meshRender
     );
 
     CHECKGLERROR("onDrawFrame");
@@ -292,9 +312,11 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   }
 
   CardboardLensDistortion_destroy(lens_distortion_);
+
   lens_distortion_ = CardboardLensDistortion_create(
       mScreenWidthMeters,
-      mScreenHeightMeters
+      mScreenHeightMeters,
+      &meshes
   );
 
   GlSetup();
@@ -303,54 +325,53 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   const CardboardOpenGlEsDistortionRendererConfig config{kGlTexture2D};
   distortion_renderer_ = CardboardOpenGlEs3DistortionRenderer_create(&config);
 
-
-  mLeftEye.id = 0;
-  mRightEye.id = 1;
-
-  CardboardLensDistortion_getDistortionMesh(
-      lens_distortion_,
-      &mLeftEye
-  );
+  meshes[0]->meshRender->id = 0;
+  meshes[1]->meshRender->id = 1;
 
   CardboardLensDistortion_getDistortionMesh(
       lens_distortion_,
-      &mRightEye
+      meshes[0]->meshRender
   );
 
-  LOGD("SetMesh:: LEFT_EYE: ID: %i", mLeftEye.id);
-  CardboardDistortionRenderer_setMesh(
-      distortion_renderer_,
-      &mLeftEye
+  CardboardLensDistortion_getDistortionMesh(
+      lens_distortion_,
+      meshes[1]->meshRender
   );
 
-  LOGD("SetMesh:: RIGHT_EYE: ID: %i", mRightEye.id);
+  LOGD("SetMesh:: LEFT_EYE: ID: %i", meshes[0]->meshRender->id);
+  CardboardDistortionRenderer_setMesh(
+      distortion_renderer_,
+      meshes[0]->meshRender
+  );
+
+  LOGD("SetMesh:: RIGHT_EYE: ID: %i", meshes[1]->meshRender->id);
 
   CardboardDistortionRenderer_setMesh(
       distortion_renderer_,
-      &mRightEye
+      meshes[1]->meshRender
   );
 
   // Get eye matrices
   CardboardLensDistortion_getEyeFromHeadMatrix(
       lens_distortion_,
-      &mLeftEye
+      meshes[0]->meshRender
   );
 
   CardboardLensDistortion_getEyeFromHeadMatrix(
       lens_distortion_,
-      &mRightEye
+      meshes[1]->meshRender
   );
 
   CardboardLensDistortion_getProjectionMatrix(
       lens_distortion_,
-      &mLeftEye,
+      meshes[0]->meshRender,
       kZNear,
       kZFar
   );
 
   CardboardLensDistortion_getProjectionMatrix(
       lens_distortion_,
-      &mRightEye,
+      meshes[1]->meshRender,
       kZNear,
       kZFar
   );
@@ -381,17 +402,20 @@ void HelloCardboardApp::GlSetup() {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width_, screen_height_, 0,
                GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-  mLeftEye.textureDescription.texture = texture_;
-  mLeftEye.textureDescription.left_u = 0;
-  mLeftEye.textureDescription.right_u = 0.5;
-  mLeftEye.textureDescription.top_v = 1;
-  mLeftEye.textureDescription.bottom_v = 0;
+    CardboardEyeTextureDescription* leftEye = &meshes[0]->meshRender->textureDescription;
+    CardboardEyeTextureDescription* rightEye = &meshes[1]->meshRender->textureDescription;
 
-  mRightEye.textureDescription.texture = texture_;
-  mRightEye.textureDescription.left_u = 0.5;
-  mRightEye.textureDescription.right_u = 1;
-  mRightEye.textureDescription.top_v = 1;
-  mRightEye.textureDescription.bottom_v = 0;
+    leftEye->texture = texture_;
+    leftEye->left_u = 0.0f;
+    leftEye->right_u = 0.5f;
+    leftEye->top_v = 1.0f;
+    leftEye->bottom_v = 0.0f;
+
+    rightEye->texture = texture_;
+    rightEye->left_u = 0.5f;
+    rightEye->right_u = 1.0f;
+    rightEye->top_v = 1.0f;
+    rightEye->bottom_v = 0.0f;
 
   // Generate depth buffer to perform depth test.
   glGenRenderbuffers(1, &depthRenderBuffer_);

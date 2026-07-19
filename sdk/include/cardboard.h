@@ -21,6 +21,7 @@
 #endif
 
 #include <stdint.h>
+#include "distortion_mesh_matrix.h"
 
 /// @defgroup types Cardboard SDK types
 /// @brief Various types used in the Cardboard SDK.
@@ -34,13 +35,6 @@
   float v;
 } CardboardUv;
 */
-/// Enum to distinguish left and right eyes.
-/*typedef enum CardboardEye {
-  /// Left eye.
-  kLeft = 0,
-  /// Right eye.
-  kRight = 1,
-} CardboardEye;*/
 
 /// Enum to describe the possible orientations of the viewport.
 typedef enum CardboardViewportOrientation {
@@ -143,41 +137,17 @@ typedef struct CardboardMesh {
   CardboardEyeTextureDescription textureDescription;
 } CardboardMesh;
 
+class CBMesh {
+public:
+    std::unique_ptr<cardboard::CBDistortionMesh> meshDistortion;
+    CardboardMesh* meshRender;
+};
+
 /// Struct to set OpenGL ES distortion renderer configuration.
 typedef struct CardboardOpenGlEsDistortionRendererConfig {
   /// Texture type.
   CardboardSupportedOpenGlEsTextureType texture_type;
 } CardboardOpenGlEsDistortionRendererConfig;
-
-/// Struct to set Metal distortion renderer configuration.
-typedef struct CardboardMetalDistortionRendererConfig {
-  /// MTLDevice id.
-  /// This field holds a CFTypeRef variable pointing to a MTLDevice object.
-  /// The SDK client is expected to manage the object ownership and to guarantee
-  /// the pointer validity during the CardboardMetalDistortionRenderer_create
-  /// function execution to ensure it is properly retained. Usage example:
-  ///
-  /// @code{.m}
-  /// CardboardMetalDistortionRendererConfig config;
-  /// config.mtl_device = CFBridgingRetain(mtlDevice);
-  /// CardboardDistortionRenderer *distortionRenderer =
-  ///     CardboardMetalDistortionRenderer_create(&config);
-  /// CFBridgingRelease(config.mtl_device);
-  /// @endcode
-  uint64_t mtl_device;
-  /// Color attachment pixel format.
-  /// This field holds a [MTLPixelFormat enum
-  /// value](https://developer.apple.com/documentation/metalkit/mtkview/1535940-colorpixelformat?language=objc).
-  uint64_t color_attachment_pixel_format;
-  /// Depth attachment pixel format.
-  /// This field holds a [MTLPixelFormat enum
-  /// value](https://developer.apple.com/documentation/metalkit/mtkview/1535940-colorpixelformat?language=objc).
-  uint64_t depth_attachment_pixel_format;
-  /// Stencil attachment pixel format.
-  /// This field holds a [MTLPixelFormat enum
-  /// value](https://developer.apple.com/documentation/metalkit/mtkview/1535940-colorpixelformat?language=objc).
-  uint64_t stencil_attachment_pixel_format;
-} CardboardMetalDistortionRendererConfig;
 
 /// Struct to set Vulkan distortion renderer configuration.
 typedef struct CardboardVulkanDistortionRendererConfig {
@@ -300,7 +270,8 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context);
 /// @return         Lens distortion object pointer.
 CardboardLensDistortion* CardboardLensDistortion_create(
         float screenWidthMeters,
-        float screenHeightMeters
+        float screenHeightMeters,
+        std::vector<CBMesh*>* meshes
 );
 
 /// Destroys and releases memory used by the provided lens distortion object.
@@ -485,8 +456,8 @@ void CardboardDistortionRenderer_renderEyeToDisplay(
     int y,
     int width,
     int height,
-    const CardboardMesh* left_eye,
-    const CardboardMesh* right_eye
+    CardboardMesh* left_eye,
+    CardboardMesh* right_eye
 );
 
 /// @}

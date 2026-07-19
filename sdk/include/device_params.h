@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARDBOARD_SDK_DEVICE_PARAMS_ANDROID_DEVICE_PARAMS_H_
-#define CARDBOARD_SDK_DEVICE_PARAMS_ANDROID_DEVICE_PARAMS_H_
+#ifndef CARDBOARD_SDK_INCLUDE_DEVICE_PARAMS_H_
+#define CARDBOARD_SDK_INCLUDE_DEVICE_PARAMS_H_
 
 #include <jni.h>
 
@@ -44,4 +44,4 @@ namespace cardboard {
 
 }  // namespace cardboard
 
-#endif  // CARDBOARD_SDK_DEVICE_PARAMS_ANDROID_DEVICE_PARAMS_H_
+#endif  // CARDBOARD_SDK_INCLUDE_DEVICE_PARAMS_H_

@@ -2,8 +2,8 @@
 // Created by gooddamn on 6/14/26.
 //
 
-#ifndef CARDBOARD_SDK_VIEWPORT_PARAMS_H
-#define CARDBOARD_SDK_VIEWPORT_PARAMS_H
+#ifndef CARDBOARD_SDK_INCLUDE_VIEWPORT_PARAMS_H
+#define CARDBOARD_SDK_INCLUDE_VIEWPORT_PARAMS_H
 
 namespace cardboard {
     // All values in tanangle units.
@@ -15,4 +15,4 @@ namespace cardboard {
     };
 }
 
-#endif //CARDBOARD_SDK_VIEWPORT_PARAMS_H
+#endif //CARDBOARD_SDK_INCLUDE_VIEWPORT_PARAMS_H

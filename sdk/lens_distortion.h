@@ -20,15 +20,15 @@
 #include <memory>
 
 #ifdef __ANDROID__
-#include "device_params/android/device_params.h"
+#include "include/device_params.h"
 #else
 #include "cardboard_device.pb.h"
 #endif
 
-#include "distortion_mesh_matrix.h"
+#include "include/distortion_mesh_matrix.h"
+#include "include/polynomial_radial_distortion.h"
+#include "include/matrix_4x4.h"
 #include "include/cardboard.h"
-#include "polynomial_radial_distortion.h"
-#include "util/matrix_4x4.h"
 
 namespace cardboard {
 
@@ -37,7 +37,7 @@ class LensDistortion {
   LensDistortion(
     float screenWidthMeters,
     float screenHeightMeters,
-    std::vector<std::unique_ptr<CBDistortionMesh>>& meshes
+    std::vector<CBMesh*>* meshes
   );
 
   // Tan angle units. "DistortedUvForUndistoredUv" goes through the forward
