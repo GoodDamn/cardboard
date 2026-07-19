@@ -184,59 +184,90 @@ void HelloCardboardApp::SetScreenParams(
     screen_params_changed_ = true;
 }
 
-void HelloCardboardApp::OnDrawFrame() {
-  if (!UpdateDeviceParams()) {
-    return;
-  }
+void HelloCardboardApp::calculateDrawMatrices(
+    CardboardMesh* mesh
+) {
+    Matrix4x4 eye_matrix = GetMatrixFromGlArray(
+        mesh->eye_matrix
+    );
 
-  // Update Head Pose.
-  head_view_ = GetPose();
-
-  // Incorporate the floor height into the head_view
-  head_view_ =
-      head_view_ * GetTranslationMatrix({0.0f, kDefaultFloorHeight, 0.0f});
-
-  // Bind buffer
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-  glDisable(GL_SCISSOR_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  // Draw eyes views
-  for (int eye = 0; eye < 2; ++eye) {
-    glViewport(eye == kLeft ? 0 : screen_width_ / 2, 0, screen_width_ / 2,
-               screen_height_);
-
-    Matrix4x4 eye_matrix = GetMatrixFromGlArray(eye_matrices_[eye]);
     Matrix4x4 eye_view = eye_matrix * head_view_;
 
-    Matrix4x4 projection_matrix =
-        GetMatrixFromGlArray(projection_matrices_[eye]);
+    Matrix4x4 projection_matrix = GetMatrixFromGlArray(
+        mesh->projection_matrix
+    );
+
     Matrix4x4 modelview_target = eye_view * model_target_;
     modelview_projection_target_ = projection_matrix * modelview_target;
     modelview_projection_room_ = projection_matrix * eye_view;
+}
+
+void HelloCardboardApp::OnDrawFrame() {
+    if (!UpdateDeviceParams()) {
+        return;
+    }
+
+    // Update Head Pose.
+    head_view_ = GetPose();
+
+    // Incorporate the floor height into the head_view
+    head_view_ =
+        head_view_ * GetTranslationMatrix({0.0f, kDefaultFloorHeight, 0.0f});
+
+    // Bind buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // LeftEye
+    glViewport(
+        0,
+        0,
+        screen_width_ / 2,
+        screen_height_
+    );
+
+    calculateDrawMatrices(
+        &mLeftEye
+    );
 
     // Draw room and target
     DrawWorld();
-  }
 
-  // Render
-  CardboardDistortionRenderer_renderEyeToDisplay(
-      distortion_renderer_,
-      /* target_display = */ 0,
-      /* x = */ 0,
-      /* y = */ 0,
-      screen_width_,
-      screen_height_,
-      &mLeftEye,
-      &mRightEye
-  );
 
-  CHECKGLERROR("onDrawFrame");
+    // RightEye
+    glViewport(
+        screen_width_ / 2,
+        0,
+        screen_width_ / 2,
+        screen_height_
+    );
+
+    calculateDrawMatrices(
+        &mRightEye
+    );
+
+    // Draw room and target
+    DrawWorld();
+
+    // Render
+    CardboardDistortionRenderer_renderEyeToDisplay(
+        distortion_renderer_,
+        /* target_display = */ 0,
+        /* x = */ 0,
+        /* y = */ 0,
+        screen_width_,
+        screen_height_,
+        &mLeftEye,
+        &mRightEye
+    );
+
+    CHECKGLERROR("onDrawFrame");
 }
 
 void HelloCardboardApp::OnTriggerEvent() {
@@ -302,30 +333,26 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   // Get eye matrices
   CardboardLensDistortion_getEyeFromHeadMatrix(
       lens_distortion_,
-      kLeft,
-      eye_matrices_[0]
+      &mLeftEye
   );
 
   CardboardLensDistortion_getEyeFromHeadMatrix(
       lens_distortion_,
-      kRight,
-      eye_matrices_[1]
+      &mRightEye
   );
 
   CardboardLensDistortion_getProjectionMatrix(
       lens_distortion_,
-      kLeft,
+      &mLeftEye,
       kZNear,
-      kZFar,
-      projection_matrices_[0]
+      kZFar
   );
 
   CardboardLensDistortion_getProjectionMatrix(
       lens_distortion_,
-      kRight,
+      &mRightEye,
       kZNear,
-      kZFar,
-      projection_matrices_[1]
+      kZFar
   );
 
   screen_params_changed_ = false;

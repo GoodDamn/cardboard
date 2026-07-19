@@ -27,20 +27,20 @@
 /// @{
 
 /// Struct to hold UV coordinates.
-typedef struct CardboardUv {
+/*typedef struct CardboardUv {
   /// u coordinate.
   float u;
   /// v coordinate.
   float v;
 } CardboardUv;
-
+*/
 /// Enum to distinguish left and right eyes.
-typedef enum CardboardEye {
+/*typedef enum CardboardEye {
   /// Left eye.
   kLeft = 0,
   /// Right eye.
   kRight = 1,
-} CardboardEye;
+} CardboardEye;*/
 
 /// Enum to describe the possible orientations of the viewport.
 typedef enum CardboardViewportOrientation {
@@ -136,6 +136,9 @@ typedef struct CardboardMesh {
   /// Number of vertices.
   int n_vertices;
   uint8_t id;
+
+  float projection_matrix[16];
+  float eye_matrix[16];
 
   CardboardEyeTextureDescription textureDescription;
 } CardboardMesh;
@@ -319,8 +322,8 @@ void CardboardLensDistortion_destroy(CardboardLensDistortion* lens_distortion);
 /// @param[in]      eye                     Desired eye.
 /// @param[out]     eye_from_head_matrix    4x4 float eye from head matrix.
 void CardboardLensDistortion_getEyeFromHeadMatrix(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye,
-    float* eye_from_head_matrix);
+    CardboardLensDistortion* lens_distortion,
+    CardboardMesh* mesh);
 
 /// Gets the ideal projection matrix for a particular eye.
 ///
@@ -335,8 +338,10 @@ void CardboardLensDistortion_getEyeFromHeadMatrix(
 /// @param[in]      z_far                   Far clip plane z-axis coordinate.
 /// @param[out]     projection_matrix       4x4 float ideal projection matrix.
 void CardboardLensDistortion_getProjectionMatrix(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye, float z_near,
-    float z_far, float* projection_matrix);
+    CardboardLensDistortion* lens_distortion,
+    CardboardMesh* mesh,
+    float z_near,
+    float z_far);
 
 /// Gets the field of view half angles for a particular eye.
 ///
@@ -351,7 +356,8 @@ void CardboardLensDistortion_getProjectionMatrix(
 ///                                         angles are disposed [left, right,
 ///                                         bottom, top].
 void CardboardLensDistortion_getFieldOfView(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye,
+    CardboardLensDistortion* lens_distortion,
+    CardboardMesh* mesh,
     float* field_of_view);
 
 /// Gets the distortion mesh for a particular eye.

@@ -134,6 +134,10 @@ class HelloCardboardApp {
    */
   void DrawWorld();
 
+  void calculateDrawMatrices(
+      CardboardMesh* mesh
+  );
+
   /**
    * Draws the target object.
    */
@@ -174,9 +178,6 @@ class HelloCardboardApp {
   int screen_height_;
   float mScreenWidthMeters;
   float mScreenHeightMeters;
-
-  float projection_matrices_[2][16];
-  float eye_matrices_[2][16];
 
   GLuint depthRenderBuffer_;  // depth buffer
   GLuint framebuffer_;        // framebuffer object
