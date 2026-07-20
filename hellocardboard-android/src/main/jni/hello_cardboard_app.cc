@@ -325,56 +325,31 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   const CardboardOpenGlEsDistortionRendererConfig config{kGlTexture2D};
   distortion_renderer_ = CardboardOpenGlEs3DistortionRenderer_create(&config);
 
-  meshes[0]->meshRender->id = 0;
-  meshes[1]->meshRender->id = 1;
+  for (uint32_t i = 0; i < meshes.size(); i++) {
+      CardboardMesh* meshRender = meshes[i]->meshRender;
+      meshRender->id = i;
+      CardboardLensDistortion_getDistortionMesh(
+          lens_distortion_,
+          meshRender
+      );
 
-  CardboardLensDistortion_getDistortionMesh(
-      lens_distortion_,
-      meshes[0]->meshRender
-  );
+      CardboardDistortionRenderer_setMesh(
+          distortion_renderer_,
+          meshRender
+      );
 
-  CardboardLensDistortion_getDistortionMesh(
-      lens_distortion_,
-      meshes[1]->meshRender
-  );
+      CardboardLensDistortion_getEyeFromHeadMatrix(
+          lens_distortion_,
+          meshRender
+      );
 
-  LOGD("SetMesh:: LEFT_EYE: ID: %i", meshes[0]->meshRender->id);
-  CardboardDistortionRenderer_setMesh(
-      distortion_renderer_,
-      meshes[0]->meshRender
-  );
-
-  LOGD("SetMesh:: RIGHT_EYE: ID: %i", meshes[1]->meshRender->id);
-
-  CardboardDistortionRenderer_setMesh(
-      distortion_renderer_,
-      meshes[1]->meshRender
-  );
-
-  // Get eye matrices
-  CardboardLensDistortion_getEyeFromHeadMatrix(
-      lens_distortion_,
-      meshes[0]->meshRender
-  );
-
-  CardboardLensDistortion_getEyeFromHeadMatrix(
-      lens_distortion_,
-      meshes[1]->meshRender
-  );
-
-  CardboardLensDistortion_getProjectionMatrix(
-      lens_distortion_,
-      meshes[0]->meshRender,
-      kZNear,
-      kZFar
-  );
-
-  CardboardLensDistortion_getProjectionMatrix(
-      lens_distortion_,
-      meshes[1]->meshRender,
-      kZNear,
-      kZFar
-  );
+      CardboardLensDistortion_getProjectionMatrix(
+          lens_distortion_,
+          meshRender,
+          kZNear,
+          kZFar
+      );
+  }
 
   screen_params_changed_ = false;
   device_params_changed_ = false;
