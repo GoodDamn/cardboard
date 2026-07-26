@@ -22,24 +22,22 @@
 
 namespace cardboard {
 
-    // This class acts as a bridge between protobuf usage in C++ code to protobuf
-    // dependency in Java, by using JNI. The class and method names are equivalent
-    // to the ones present in protobuf generated source code, to make it transparent
-    // for the user.
-    class DeviceParams {
-     public:
-      enum VerticalAlignmentType { BOTTOM = 0, CENTER = 1, TOP = 2 };
+    enum CBEnumVerticalAlignment {
+        BOTTOM = 0,
+        CENTER = 1,
+        TOP = 2
+    };
 
-      DeviceParams() {}
-
-      // Device parameters getter methods.
-      float screen_to_lens_distance() const;
-      float inter_lens_distance() const;
-      float tray_to_lens_distance() const;
-      int vertical_alignment() const;
-      float distortion_coefficients(int index) const;
-      int distortion_coefficients_size() const;
-      float left_eye_field_of_view_angles(int index) const;
+    class CBParamsDevice {
+    public:
+        virtual float screen_to_lens_distance() = 0;
+        virtual float inter_lens_distance() = 0;
+        virtual float tray_to_lens_distance() = 0;
+        virtual CBEnumVerticalAlignment vertical_alignment() = 0;
+        virtual float distortion_coefficients(int index) = 0;
+        virtual int distortion_coefficients_size() = 0;
+        virtual float left_eye_field_of_view_angles(int index) = 0;
+        virtual ~CBParamsDevice() = default;
     };
 
 }  // namespace cardboard

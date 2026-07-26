@@ -23,9 +23,9 @@
 #include "util/is_arg_null.h"
 #include "util/is_initialized.h"
 #include "util/logging.h"
+#include "include/device_params.h"
 
 #ifdef __ANDROID__
-#include "include/device_params.h"
 #include "jni_utils/android/jni_utils.h"
 #endif
 
@@ -122,7 +122,8 @@ void Cardboard_initializeAndroid(JavaVM *vm, jobject context) {
 CardboardLensDistortion* CardboardLensDistortion_create(
     float screenWidthMeters,
     float screenHeightMeters,
-    std::vector<CBMesh*>* meshes
+    std::vector<CBMesh*>* meshes,
+    cardboard::CBParamsDevice* deviceParams
 ) {
     if (CARDBOARD_IS_NOT_INITIALIZED()) {
         return nullptr;
@@ -133,7 +134,8 @@ CardboardLensDistortion* CardboardLensDistortion_create(
         new cardboard::LensDistortion(
             screenWidthMeters,
             screenHeightMeters,
-            meshes
+            meshes,
+            deviceParams
         )
     );
 }

@@ -37,7 +37,8 @@ class LensDistortion {
   LensDistortion(
     float screenWidthMeters,
     float screenHeightMeters,
-    std::vector<CBMesh*>* meshes
+    std::vector<CBMesh*>* meshes,
+    CBParamsDevice* deviceParams
   );
 
   // Tan angle units. "DistortedUvForUndistoredUv" goes through the forward
@@ -60,7 +61,7 @@ class LensDistortion {
 
   static constexpr float DegreesToRadians(float angle);
 
-  DeviceParams device_params_;
+  CBParamsDevice* device_params_;
 
   float screen_width_meters_;
   float screen_height_meters_;

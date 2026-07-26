@@ -25,6 +25,7 @@
 #include <fstream>
 
 #include "cardboard.h"
+#include "device_params_impl.h"
 
 namespace ndk_hello_cardboard {
 
@@ -316,7 +317,8 @@ bool HelloCardboardApp::UpdateDeviceParams() {
   lens_distortion_ = CardboardLensDistortion_create(
       mScreenWidthMeters,
       mScreenHeightMeters,
-      &meshes
+      &meshes,
+      &mDeviceParams
   );
 
   GlSetup();

@@ -33,25 +33,27 @@ namespace cardboard {
     LensDistortion::LensDistortion(
         float screenWidthMeters,
         float screenHeightMeters,
-        std::vector<CBMesh*>* meshes
+        std::vector<CBMesh*>* meshes,
+        CBParamsDevice* deviceParams
     ) : screen_width_meters_(
         screenWidthMeters
     ), screen_height_meters_(
         screenHeightMeters
     ) {
+        device_params_ = deviceParams;
         for (const auto & meshe : *meshes) {
             meshe->meshDistortion->calculateHeadMatrix(
-                device_params_.inter_lens_distance()
+                device_params_->inter_lens_distance()
             );
         }
 
         std::vector<float> distortion_coefficients(
-            device_params_.distortion_coefficients_size(),
+            device_params_->distortion_coefficients_size(),
             0.0f
         );
 
-        for (int i = 0; i < device_params_.distortion_coefficients_size(); i++) {
-            distortion_coefficients.at(i) = device_params_.distortion_coefficients(i);
+        for (int i = 0; i < device_params_->distortion_coefficients_size(); i++) {
+            distortion_coefficients.at(i) = device_params_->distortion_coefficients(i);
         }
 
         distortion_ = std::make_unique<PolynomialRadialDistortion>(
@@ -70,7 +72,7 @@ namespace cardboard {
             ViewportParams paramsScreen, paramsTexture;
 
             meshe->meshDistortion->calculateScreenParams(
-                &device_params_,
+                device_params_,
                 screenWidthMeters,
                 screenHeightMeters,
                 yOffsetMeters,
@@ -106,7 +108,7 @@ namespace cardboard {
         ViewportParams paramsScreen, paramsTexture;
 
         mesh->calculateScreenParams(
-            &device_params_,
+            device_params_,
             screen_width_meters_,
             screen_height_meters_,
             GetYEyeOffsetMeters(),
@@ -146,7 +148,7 @@ namespace cardboard {
 
         ViewportParams paramsScreen, paramsTexture;
         mesh->calculateScreenParams(
-            &device_params_,
+            device_params_,
             screen_width_meters_,
             screen_height_meters_,
             GetYEyeOffsetMeters(),
@@ -179,16 +181,16 @@ namespace cardboard {
         // FOV angles in device parameters are in degrees so they are converted
         // to radians for posterior use.
         std::array<float, 4> device_fov = {
-                DegreesToRadians(device_params_.left_eye_field_of_view_angles(0)),
-                DegreesToRadians(device_params_.left_eye_field_of_view_angles(1)),
-                DegreesToRadians(device_params_.left_eye_field_of_view_angles(2)),
-                DegreesToRadians(device_params_.left_eye_field_of_view_angles(3)),
+                DegreesToRadians(device_params_->left_eye_field_of_view_angles(0)),
+                DegreesToRadians(device_params_->left_eye_field_of_view_angles(1)),
+                DegreesToRadians(device_params_->left_eye_field_of_view_angles(2)),
+                DegreesToRadians(device_params_->left_eye_field_of_view_angles(3)),
         };
 
-        const float eye_to_screen_distance = device_params_.screen_to_lens_distance();
+        const float eye_to_screen_distance = device_params_->screen_to_lens_distance();
         const float outer_distance =
-                (screen_width_meters_ - device_params_.inter_lens_distance()) / 2.0f;
-        const float inner_distance = device_params_.inter_lens_distance() / 2.0f;
+                (screen_width_meters_ - device_params_->inter_lens_distance()) / 2.0f;
+        const float inner_distance = device_params_->inter_lens_distance() / 2.0f;
         const float bottom_distance = GetYEyeOffsetMeters();
         const float top_distance = screen_height_meters_ - bottom_distance;
 
@@ -210,14 +212,14 @@ namespace cardboard {
     }
 
     float LensDistortion::GetYEyeOffsetMeters() {
-        switch (device_params_.vertical_alignment()) {
-            case DeviceParams::CENTER:
+        switch (device_params_->vertical_alignment()) {
+            case CBEnumVerticalAlignment::CENTER:
             default:
                 return screen_height_meters_ / 2.0f;
-            case DeviceParams::BOTTOM:
-                return device_params_.tray_to_lens_distance() - kDefaultBorderSizeMeters;
-            case DeviceParams::TOP:
-                return screen_height_meters_ - device_params_.tray_to_lens_distance() -
+            case CBEnumVerticalAlignment::BOTTOM:
+                return device_params_->tray_to_lens_distance() - kDefaultBorderSizeMeters;
+            case CBEnumVerticalAlignment::TOP:
+                return screen_height_meters_ - device_params_->tray_to_lens_distance() -
                        kDefaultBorderSizeMeters;
         }
     }

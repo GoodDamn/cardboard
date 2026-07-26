@@ -22,7 +22,7 @@ class CBDistortionMeshEyeLeft
     ) override;
 
     void calculateScreenParams(
-        cardboard::DeviceParams* deviceParams,
+        cardboard::CBParamsDevice* deviceParams,
         float screenWidthMeters,
         float screenHeightMeters,
         float yOffsetMeters,
@@ -45,7 +45,7 @@ class CBDistortionMeshEyeRight
     ) override;
 
     void calculateScreenParams(
-        cardboard::DeviceParams* deviceParams,
+        cardboard::CBParamsDevice* deviceParams,
         float screenWidthMeters,
         float screenHeightMeters,
         float yOffsetMeters,

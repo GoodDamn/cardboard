@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include "distortion_mesh_matrix.h"
+#include "device_params.h"
 
 /// @defgroup types Cardboard SDK types
 /// @brief Various types used in the Cardboard SDK.
@@ -271,7 +272,8 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context);
 CardboardLensDistortion* CardboardLensDistortion_create(
         float screenWidthMeters,
         float screenHeightMeters,
-        std::vector<CBMesh*>* meshes
+        std::vector<CBMesh*>* meshes,
+        cardboard::CBParamsDevice* deviceParams
 );
 
 /// Destroys and releases memory used by the provided lens distortion object.

@@ -29,6 +29,7 @@
 #include "cardboard.h"
 #include "util.h"
 #include "distortion_eyes.h"
+#include "device_params_impl.h"
 
 namespace ndk_hello_cardboard {
 
@@ -38,6 +39,7 @@ namespace ndk_hello_cardboard {
  */
 class HelloCardboardApp {
     std::vector<CBMesh*> meshes;
+    APParamsDeviceDefault mDeviceParams;
  public:
   /**
    * Creates a HelloCardboardApp.

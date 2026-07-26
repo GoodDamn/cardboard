@@ -36,7 +36,7 @@ void CBDistortionMeshEyeLeft::calculateTextureParams(
 }
 
 void CBDistortionMeshEyeLeft::calculateScreenParams(
-    cardboard::DeviceParams *deviceParams,
+    cardboard::CBParamsDevice* deviceParams,
     float screenWidthMeters,
     float screenHeightMeters,
     float yOffsetMeters,
@@ -47,8 +47,8 @@ void CBDistortionMeshEyeLeft::calculateScreenParams(
     screenParams->width = screenWidthMeters / screenLensDistance;
     screenParams->height = screenHeightMeters / screenLensDistance;
     screenParams->x_eye_offset = (
-                                     (screenWidthMeters - interLensDistance) / 2
-                                 ) / screenLensDistance;
+        (screenWidthMeters - interLensDistance) / 2
+    ) / screenLensDistance;
     screenParams->y_eye_offset = yOffsetMeters / screenLensDistance;
 }
 
@@ -85,7 +85,7 @@ void CBDistortionMeshEyeRight::calculateTextureParams(
 }
 
 void CBDistortionMeshEyeRight::calculateScreenParams(
-    cardboard::DeviceParams *deviceParams,
+    cardboard::CBParamsDevice* deviceParams,
     float screenWidthMeters,
     float screenHeightMeters,
     float yOffsetMeters,
@@ -96,7 +96,7 @@ void CBDistortionMeshEyeRight::calculateScreenParams(
     screenParams->width = screenWidthMeters / screenLensDistance;
     screenParams->height = screenHeightMeters / screenLensDistance;
     screenParams->x_eye_offset = (
-                                     (screenWidthMeters + interLensDistance) / 2
-                                 ) / screenLensDistance;
+        (screenWidthMeters + interLensDistance) / 2
+    ) / screenLensDistance;
     screenParams->y_eye_offset = yOffsetMeters / screenLensDistance;
 }

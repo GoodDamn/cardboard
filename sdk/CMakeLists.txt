@@ -46,8 +46,6 @@ file(GLOB sensors_android_srcs "sensors/android/*.cc")
 file(GLOB jni_util_srcs "jni_utils/android/*.cc")
 # Util Sources
 file(GLOB util_srcs "util/*.cc")
-# Device Params Sources
-file(GLOB device_params_srcs "device_params/android/*.cc")
 # Rendering Sources
 file(GLOB rendering_opengl_srcs "rendering/opengl_*.cc")
 
@@ -65,7 +63,6 @@ add_library(GfxPluginCardboard SHARED
     ${sensors_android_srcs}
     ${jni_util_srcs}
     ${util_srcs}
-    ${device_params_srcs}
     ${rendering_opengl_srcs}
     # #vulkan This is required for Vulkan rendering. Remove the following two
     # lines if Vulkan rendering is not needed.

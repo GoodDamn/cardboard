@@ -47,7 +47,7 @@ namespace cardboard {
         ) = 0;
 
         virtual void calculateScreenParams(
-            DeviceParams* deviceParams,
+            cardboard::CBParamsDevice* deviceParams,
             float screenWidthMeters,
             float screenHeightMeters,
             float yOffsetMeters,
