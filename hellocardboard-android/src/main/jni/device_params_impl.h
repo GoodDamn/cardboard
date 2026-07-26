@@ -6,10 +6,75 @@
 #define CARDBOARD_DEVICE_PARAMS_IMPL_H
 
 #include <jni.h>
-
+#include <array>
 #include <cstdint>
 
 #include "device_params.h"
+
+class APParamsDeviceMutable
+: public cardboard::CBParamsDevice {
+private:
+
+    float mDistanceInterLens;
+    float mDistanceTrayToLens;
+    float mDistanceScreenToLens;
+    std::array<float, 4> mFovHalfDegrees;
+    std::array<float, 2> mDistortionCoeffs;
+
+public:
+
+    void setDistanceScreenToLens(
+        float d
+    ) { mDistanceScreenToLens = d; }
+
+    void setDistanceInterLens(
+        float d
+    ) { mDistanceInterLens = d; }
+
+    void setDistanceTrayToLens(
+        float d
+    ) { mDistanceTrayToLens = d; }
+
+    void setFovHalfDegrees(
+        std::array<float, 4> d
+    ) { mFovHalfDegrees = d; }
+
+    void setDistortionCoeffs(
+        std::array<float, 2> d
+    ) { mDistortionCoeffs = d; }
+
+    float screen_to_lens_distance() override {
+        return mDistanceScreenToLens;
+    }
+
+    float inter_lens_distance() override {
+        return mDistanceInterLens;
+    }
+
+    float tray_to_lens_distance() override {
+        return mDistanceTrayToLens;
+    }
+
+    cardboard::CBEnumVerticalAlignment vertical_alignment() override {
+        return cardboard::CBEnumVerticalAlignment::BOTTOM;
+    }
+
+    float distortion_coefficients(
+        int index
+    ) override {
+        return mDistortionCoeffs[index];
+    }
+
+    int distortion_coefficients_size() override {
+        return mDistortionCoeffs.size();
+    }
+
+    float left_eye_field_of_view_angles(
+        int index
+    ) override {
+        return mFovHalfDegrees[index];
+    }
+};
 
 class APParamsDeviceDefault
 : public cardboard::CBParamsDevice {

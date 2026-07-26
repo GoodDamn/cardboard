@@ -47,8 +47,25 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
 }
 
 JNI_METHOD(jlong, nativeOnCreate)
-(JNIEnv* /*env*/, jobject obj, jobject asset_mgr) {
-  return jptr(new ndk_hello_cardboard::HelloCardboardApp(javaVm, obj, asset_mgr));
+(JNIEnv* /*env*/,
+    jobject obj,
+    jobject asset_mgr,
+    jfloat interLensDistance,
+    jfloat trayToLensDistance,
+    jfloat screenToLensDistance,
+    jfloatArray fovHalfDegrees,
+    jfloatArray distortionCoeffs
+) {
+  return jptr(new ndk_hello_cardboard::HelloCardboardApp(
+      javaVm,
+      obj,
+      asset_mgr,
+      interLensDistance,
+      trayToLensDistance,
+      screenToLensDistance,
+      fovHalfDegrees,
+      distortionCoeffs
+      ));
 }
 
 JNI_METHOD(void, nativeOnDestroy)

@@ -39,7 +39,7 @@ namespace ndk_hello_cardboard {
  */
 class HelloCardboardApp {
     std::vector<CBMesh*> meshes;
-    APParamsDeviceDefault mDeviceParams;
+    APParamsDeviceMutable mDeviceParams;
  public:
   /**
    * Creates a HelloCardboardApp.
@@ -48,7 +48,15 @@ class HelloCardboardApp {
    * @param obj Android activity object.
    * @param asset_mgr_obj The asset manager object.
    */
-  HelloCardboardApp(JavaVM* vm, jobject obj, jobject asset_mgr_obj);
+  HelloCardboardApp(
+      JavaVM* vm,
+      jobject obj,
+      jobject asset_mgr_obj,
+      jfloat interLensDistance,
+      jfloat trayToLensDistance,
+      jfloat screenToLensDistance,
+      jfloatArray fovHalfDegrees,
+      jfloatArray distortionCoeffs);
 
   ~HelloCardboardApp();
 

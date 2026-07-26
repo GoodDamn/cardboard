@@ -73,9 +73,17 @@ public class VrActivity extends AppCompatActivity {
   public void onCreate(Bundle savedInstance) {
     super.onCreate(savedInstance);
 
-    nativeApp = nativeOnCreate(getAssets());
+    nativeApp = nativeOnCreate(
+            getAssets(),
+            0.060f,
+            0.035f,
+            0.042f,
+            new float[] { 40.0f, 40.0f, 40.0f, 40.0f},
+            new float[] {0.441f, 0.156f}
+    );
 
-    @NonNull DisplayMetrics metrics = getResources()
+    @NonNull
+    final DisplayMetrics metrics = getResources()
             .getDisplayMetrics();
 
     mDpiX = metrics.xdpi;
@@ -237,7 +245,14 @@ public class VrActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
   }
 
-  private native long nativeOnCreate(AssetManager assetManager);
+  private native long nativeOnCreate(
+    AssetManager assetManager,
+    float interLensDistance,
+    float trayToLensDistance,
+    float screenToLensDistance,
+    float[] fovHalfDegrees,
+    float[] distortionCoeffs
+  );
 
   private native void nativeOnDestroy(long nativeApp);
 
