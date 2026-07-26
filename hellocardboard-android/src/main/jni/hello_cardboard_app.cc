@@ -316,7 +316,6 @@ namespace ndk_hello_cardboard {
             screen_height_
         );
 
-        LOGD("HelloCardboardApp: DRAW FRAME");
         calculateDrawMatrices(
             meshes[0]->meshRender
         );

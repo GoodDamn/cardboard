@@ -37,6 +37,12 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.PopupMenu;
 import android.widget.Toast;
+
+import com.google.cardboard.misc.VRMParams;
+import com.google.cardboard.misc.VRProviderParams;
+
+import java.io.IOException;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -73,13 +79,31 @@ public class VrActivity extends AppCompatActivity {
   public void onCreate(Bundle savedInstance) {
     super.onCreate(savedInstance);
 
-    nativeApp = nativeOnCreate(
-            getAssets(),
-            0.060f,
-            0.035f,
-            0.042f,
-            new float[] { 40.0f, 40.0f, 40.0f, 40.0f},
-            new float[] {0.441f, 0.156f}
+      @NonNull
+      VRMParams paramsVr = null;
+      try {
+          paramsVr = VRProviderParams.extractPublicParams(
+                  this
+          );
+      } catch (Exception e) {}
+
+      if (paramsVr == null) {
+          paramsVr = new VRMParams(
+                  0.060f,
+                  0.035f,
+                  0.042f,
+                  new float[] { 40.0f, 40.0f, 40.0f, 40.0f},
+                  new float[] {0.441f, 0.156f}
+          );
+      }
+
+      nativeApp = nativeOnCreate(
+        getAssets(),
+        paramsVr.getDistanceInterLens(),
+        paramsVr.getDistanceTrayToLens(),
+        paramsVr.getDistanceScreenToLens(),
+        paramsVr.getFov(),
+        paramsVr.getDistortionCoeffs()
     );
 
     @NonNull
