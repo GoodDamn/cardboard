@@ -28,6 +28,8 @@
 #include <GLES2/gl2.h>
 #include "cardboard.h"
 #include "util.h"
+#include "distortion_eyes.h"
+#include "device_params_impl.h"
 
 namespace ndk_hello_cardboard {
 
@@ -36,6 +38,8 @@ namespace ndk_hello_cardboard {
  * objects that you can click on.
  */
 class HelloCardboardApp {
+    std::vector<CBMesh*> meshes;
+    APParamsDeviceMutable mDeviceParams;
  public:
   /**
    * Creates a HelloCardboardApp.
@@ -44,7 +48,15 @@ class HelloCardboardApp {
    * @param obj Android activity object.
    * @param asset_mgr_obj The asset manager object.
    */
-  HelloCardboardApp(JavaVM* vm, jobject obj, jobject asset_mgr_obj);
+  HelloCardboardApp(
+      JavaVM* vm,
+      jobject obj,
+      jobject asset_mgr_obj,
+      jfloat interLensDistance,
+      jfloat trayToLensDistance,
+      jfloat screenToLensDistance,
+      jfloatArray fovHalfDegrees,
+      jfloatArray distortionCoeffs);
 
   ~HelloCardboardApp();
 
@@ -134,6 +146,10 @@ class HelloCardboardApp {
    */
   void DrawWorld();
 
+  void calculateDrawMatrices(
+      CardboardMesh* mesh
+  );
+
   /**
    * Draws the target object.
    */
@@ -165,18 +181,12 @@ class HelloCardboardApp {
   CardboardLensDistortion* lens_distortion_;
   CardboardDistortionRenderer* distortion_renderer_;
 
-  CardboardEyeTextureDescription left_eye_texture_description_;
-  CardboardEyeTextureDescription right_eye_texture_description_;
-
   bool screen_params_changed_;
   bool device_params_changed_;
   int screen_width_;
   int screen_height_;
   float mScreenWidthMeters;
   float mScreenHeightMeters;
-
-  float projection_matrices_[2][16];
-  float eye_matrices_[2][16];
 
   GLuint depthRenderBuffer_;  // depth buffer
   GLuint framebuffer_;        // framebuffer object

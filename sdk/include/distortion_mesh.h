@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARDBOARD_SDK_DISTORTION_MESH_H_
-#define CARDBOARD_SDK_DISTORTION_MESH_H_
+#ifndef CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_H_
+#define CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_H_
 
 #include <vector>
 
-#include "include/cardboard.h"
 #include "polynomial_radial_distortion.h"
+#include "matrix_4x4.h"
 
 namespace cardboard {
 
@@ -32,9 +32,15 @@ class DistortionMesh {
                  float texture_width, float texture_height,
                  float x_eye_offset_texture, float y_eye_offset_texture);
   virtual ~DistortionMesh() = default;
-  CardboardMesh GetMesh() const;
 
- private:
+  std::vector<float>* getVertices();
+  std::vector<int>* getIndices();
+  std::vector<float>* getUv();
+
+  Matrix4x4 eye_from_head_matrix_;
+  std::array<float, 4> fov_;  // L, R, B, T
+
+  private:
   static constexpr int kResolution = 40;
   std::vector<int> index_data_;
   std::vector<float> vertex_data_;
@@ -43,4 +49,4 @@ class DistortionMesh {
 
 }  // namespace cardboard
 
-#endif  // CARDBOARD_SDK_DISTORTION_MESH_H_
+#endif  // CARDBOARD_SDK_INCLUDE_DISTORTION_MESH_H_

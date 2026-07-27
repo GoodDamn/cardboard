@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "polynomial_radial_distortion.h"
+#include "include/polynomial_radial_distortion.h"
 
 #include <cmath>
 #include <limits>

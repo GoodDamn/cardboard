@@ -21,26 +21,21 @@
 #endif
 
 #include <stdint.h>
+#include "distortion_mesh_matrix.h"
+#include "device_params.h"
 
 /// @defgroup types Cardboard SDK types
 /// @brief Various types used in the Cardboard SDK.
 /// @{
 
 /// Struct to hold UV coordinates.
-typedef struct CardboardUv {
+/*typedef struct CardboardUv {
   /// u coordinate.
   float u;
   /// v coordinate.
   float v;
 } CardboardUv;
-
-/// Enum to distinguish left and right eyes.
-typedef enum CardboardEye {
-  /// Left eye.
-  kLeft = 0,
-  /// Right eye.
-  kRight = 1,
-} CardboardEye;
+*/
 
 /// Enum to describe the possible orientations of the viewport.
 typedef enum CardboardViewportOrientation {
@@ -75,6 +70,53 @@ typedef enum CardboardSupportedOpenGlEsTextureType {
   kGlTextureExternalOes = 1,
 } CardboardSupportedOpenGlEsTextureType;
 
+/// Struct to hold information about an eye texture.
+typedef struct CardboardEyeTextureDescription {
+    /// The texture with eye pixels.
+    ///
+    /// When using OpenGL ES 2.x and OpenGL ES 3.x, this field corresponds to a
+    /// GLuint variable.
+    ///
+    /// When using Vulkan, this field corresponds to an uint64_t address pointing
+    /// to a @c VkImage variable.The SDK client is expected to manage the
+    /// object ownership and to guarantee the pointer validity during the
+    /// @c ::CardboardDistortionRenderer_renderEyeToDisplay function execution
+    /// to ensure it is properly retained. Usage example:
+    ///
+    /// @code{.cc}
+    /// VkImage image;
+    /// // Initialize and set up the image...
+    /// CardboardEyeTextureDescription leftEye;
+    /// leftEye.texture = reinterpret_cast<uint64_t>(image)
+    /// // Fill remaining fields in leftEye...
+    /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
+    /// // Clear previous image if it is needed.
+    /// @endcode
+    ///
+    /// When using Metal, this field corresponds to a @c CFTypeRef
+    /// variable pointing to a @c MTLTexture object. The SDK client is expected
+    /// to manage the object ownership and to guarantee the pointer validity
+    /// during the @c ::CardboardDistortionRenderer_renderEyeToDisplay function
+    /// execution to ensure it is properly retained. Usage example:
+    ///
+    /// @code{.m}
+    /// CardboardEyeTextureDescription leftEye;
+    /// leftEye.texture = CFBridgingRetain(_texture);
+    /// // Fill remaining fields in leftEye...
+    /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
+    /// CFBridgingRelease(leftEye.texture);
+    /// @endcode
+    uint64_t texture;
+    /// u coordinate of the left side of the eye.
+    float left_u;
+    /// u coordinate of the right side of the eye.
+    float right_u;
+    /// v coordinate of the top side of the eye.
+    float top_v;
+    /// v coordinate of the bottom side of the eye.
+    float bottom_v;
+} CardboardEyeTextureDescription;
+
 /// Struct representing a 3D mesh with 3D vertices and corresponding UV
 /// coordinates.
 typedef struct CardboardMesh {
@@ -88,90 +130,25 @@ typedef struct CardboardMesh {
   float* uvs;
   /// Number of vertices.
   int n_vertices;
+  uint8_t id;
+
+  float projection_matrix[16];
+  float eye_matrix[16];
+
+  CardboardEyeTextureDescription textureDescription;
 } CardboardMesh;
 
-/// Struct to hold information about an eye texture.
-typedef struct CardboardEyeTextureDescription {
-  /// The texture with eye pixels.
-  ///
-  /// When using OpenGL ES 2.x and OpenGL ES 3.x, this field corresponds to a
-  /// GLuint variable.
-  ///
-  /// When using Vulkan, this field corresponds to an uint64_t address pointing
-  /// to a @c VkImage variable.The SDK client is expected to manage the
-  /// object ownership and to guarantee the pointer validity during the
-  /// @c ::CardboardDistortionRenderer_renderEyeToDisplay function execution
-  /// to ensure it is properly retained. Usage example:
-  ///
-  /// @code{.cc}
-  /// VkImage image;
-  /// // Initialize and set up the image...
-  /// CardboardEyeTextureDescription leftEye;
-  /// leftEye.texture = reinterpret_cast<uint64_t>(image)
-  /// // Fill remaining fields in leftEye...
-  /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
-  /// // Clear previous image if it is needed.
-  /// @endcode
-  ///
-  /// When using Metal, this field corresponds to a @c CFTypeRef
-  /// variable pointing to a @c MTLTexture object. The SDK client is expected
-  /// to manage the object ownership and to guarantee the pointer validity
-  /// during the @c ::CardboardDistortionRenderer_renderEyeToDisplay function
-  /// execution to ensure it is properly retained. Usage example:
-  ///
-  /// @code{.m}
-  /// CardboardEyeTextureDescription leftEye;
-  /// leftEye.texture = CFBridgingRetain(_texture);
-  /// // Fill remaining fields in leftEye...
-  /// CardboardDistortionRenderer_renderEyeToDisplay(..., &leftEye, ...);
-  /// CFBridgingRelease(leftEye.texture);
-  /// @endcode
-  uint64_t texture;
-  /// u coordinate of the left side of the eye.
-  float left_u;
-  /// u coordinate of the right side of the eye.
-  float right_u;
-  /// v coordinate of the top side of the eye.
-  float top_v;
-  /// v coordinate of the bottom side of the eye.
-  float bottom_v;
-} CardboardEyeTextureDescription;
+class CBMesh {
+public:
+    std::unique_ptr<cardboard::CBDistortionMesh> meshDistortion;
+    CardboardMesh* meshRender;
+};
 
 /// Struct to set OpenGL ES distortion renderer configuration.
 typedef struct CardboardOpenGlEsDistortionRendererConfig {
   /// Texture type.
   CardboardSupportedOpenGlEsTextureType texture_type;
 } CardboardOpenGlEsDistortionRendererConfig;
-
-/// Struct to set Metal distortion renderer configuration.
-typedef struct CardboardMetalDistortionRendererConfig {
-  /// MTLDevice id.
-  /// This field holds a CFTypeRef variable pointing to a MTLDevice object.
-  /// The SDK client is expected to manage the object ownership and to guarantee
-  /// the pointer validity during the CardboardMetalDistortionRenderer_create
-  /// function execution to ensure it is properly retained. Usage example:
-  ///
-  /// @code{.m}
-  /// CardboardMetalDistortionRendererConfig config;
-  /// config.mtl_device = CFBridgingRetain(mtlDevice);
-  /// CardboardDistortionRenderer *distortionRenderer =
-  ///     CardboardMetalDistortionRenderer_create(&config);
-  /// CFBridgingRelease(config.mtl_device);
-  /// @endcode
-  uint64_t mtl_device;
-  /// Color attachment pixel format.
-  /// This field holds a [MTLPixelFormat enum
-  /// value](https://developer.apple.com/documentation/metalkit/mtkview/1535940-colorpixelformat?language=objc).
-  uint64_t color_attachment_pixel_format;
-  /// Depth attachment pixel format.
-  /// This field holds a [MTLPixelFormat enum
-  /// value](https://developer.apple.com/documentation/metalkit/mtkview/1535940-colorpixelformat?language=objc).
-  uint64_t depth_attachment_pixel_format;
-  /// Stencil attachment pixel format.
-  /// This field holds a [MTLPixelFormat enum
-  /// value](https://developer.apple.com/documentation/metalkit/mtkview/1535940-colorpixelformat?language=objc).
-  uint64_t stencil_attachment_pixel_format;
-} CardboardMetalDistortionRendererConfig;
 
 /// Struct to set Vulkan distortion renderer configuration.
 typedef struct CardboardVulkanDistortionRendererConfig {
@@ -191,29 +168,6 @@ typedef struct CardboardVulkanDistortionRendererConfig {
   /// Maintained by the user.
   uint64_t vk_swapchain;
 } CardboardVulkanDistortionRendererConfig;
-
-/// Struct to set Metal distortion renderer target configuration.
-typedef struct CardboardMetalDistortionRendererTargetConfig {
-  /// MTLRenderCommandEncoder id.
-  /// This field holds a CFTypeRef variable pointing to a
-  /// @c MTLRenderCommandEncoder object. The SDK client is expected to manage
-  /// the object ownership and to guarantee the pointer validity during the
-  /// @c ::CardboardDistortionRenderer_renderEyeToDisplay function execution to
-  /// ensure it is properly retained. Usage example:
-  ///
-  /// @code{.m}
-  /// CardboardMetalDistortionRendererTargetConfig target_config;
-  /// target_config.render_command_encoder =
-  ///     CFBridgingRetain(renderCommandEncoder);
-  /// CardboardDistortionRenderer_renderEyeToDisplay(..., &target_config, ...);
-  /// CFBridgingRelease(target_config.render_command_encoder);
-  /// @endcode
-  uint64_t render_command_encoder;
-  /// Full width of the screen in pixels.
-  int screen_width;
-  /// Full height of the screen in pixels.
-  int screen_height;
-} CardboardMetalDistortionRendererTargetConfig;
 
 /// Struct to set Vulkan distortion renderer target.
 typedef struct CardboardVulkanDistortionRendererTarget {
@@ -312,17 +266,14 @@ void Cardboard_initializeAndroid(JavaVM* vm, jobject context);
 /// When it is unmet, a call to this function results in a no-op and returns a
 /// @c nullptr.
 ///
-/// @param[in]      encoded_device_params   The device parameters serialized
-///     using cardboard_device.proto.
-/// @param[in]      size                    Size in bytes of
-///     @c encoded_device_params.
 /// @param[in]      display_width           Size in pixels of display width.
 /// @param[in]      display_height          Size in pixels of display height.
 /// @return         Lens distortion object pointer.
 CardboardLensDistortion* CardboardLensDistortion_create(
-        const uint8_t* encoded_device_params,
         float screenWidthMeters,
-        float screenHeightMeters
+        float screenHeightMeters,
+        std::vector<CBMesh*>* meshes,
+        cardboard::CBParamsDevice* deviceParams
 );
 
 /// Destroys and releases memory used by the provided lens distortion object.
@@ -344,8 +295,8 @@ void CardboardLensDistortion_destroy(CardboardLensDistortion* lens_distortion);
 /// @param[in]      eye                     Desired eye.
 /// @param[out]     eye_from_head_matrix    4x4 float eye from head matrix.
 void CardboardLensDistortion_getEyeFromHeadMatrix(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye,
-    float* eye_from_head_matrix);
+    CardboardLensDistortion* lens_distortion,
+    CardboardMesh* mesh);
 
 /// Gets the ideal projection matrix for a particular eye.
 ///
@@ -360,8 +311,10 @@ void CardboardLensDistortion_getEyeFromHeadMatrix(
 /// @param[in]      z_far                   Far clip plane z-axis coordinate.
 /// @param[out]     projection_matrix       4x4 float ideal projection matrix.
 void CardboardLensDistortion_getProjectionMatrix(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye, float z_near,
-    float z_far, float* projection_matrix);
+    CardboardLensDistortion* lens_distortion,
+    CardboardMesh* mesh,
+    float z_near,
+    float z_far);
 
 /// Gets the field of view half angles for a particular eye.
 ///
@@ -376,7 +329,8 @@ void CardboardLensDistortion_getProjectionMatrix(
 ///                                         angles are disposed [left, right,
 ///                                         bottom, top].
 void CardboardLensDistortion_getFieldOfView(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye,
+    CardboardLensDistortion* lens_distortion,
+    CardboardMesh* mesh,
     float* field_of_view);
 
 /// Gets the distortion mesh for a particular eye.
@@ -393,7 +347,7 @@ void CardboardLensDistortion_getFieldOfView(
 /// @param[in]      eye                     Desired eye.
 /// @param[out]     mesh                    Distortion mesh.
 void CardboardLensDistortion_getDistortionMesh(
-    CardboardLensDistortion* lens_distortion, CardboardEye eye,
+    CardboardLensDistortion* lens_distortion,
     CardboardMesh* mesh);
 
 /// Applies lens inverse distortion function to a point normalized [0,1] in
@@ -408,7 +362,7 @@ void CardboardLensDistortion_getDistortionMesh(
 /// @param[in]      distorted_uv            Distorted UV point.
 /// @param[in]      eye                     Desired eye.
 /// @return         Point normalized [0,1] in the screen post distort space.
-CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
+/*CardboardUv CardboardLensDistortion_undistortedUvForDistortedUv(
     CardboardLensDistortion* lens_distortion, const CardboardUv* distorted_uv,
     CardboardEye eye);
 
@@ -429,7 +383,7 @@ CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
     CardboardLensDistortion* lens_distortion, const CardboardUv* undistorted_uv,
     CardboardEye eye);
 /// @}
-
+*/
 /////////////////////////////////////////////////////////////////////////////
 // Distortion Renderer
 /////////////////////////////////////////////////////////////////////////////
@@ -439,14 +393,6 @@ CardboardUv CardboardLensDistortion_distortedUvForUndistortedUv(
 /// Important: This module functions must be called from the render thread.
 /// @{
 
-/// Creates a new distortion renderer object. It uses OpenGL ES 2.0 as the
-/// rendering API. Must be called from the render thread.
-///
-/// @param[in]      config                  Distortion renderer configuration.
-/// @return         Distortion renderer object pointer
-CardboardDistortionRenderer* CardboardOpenGlEs2DistortionRenderer_create(
-    const CardboardOpenGlEsDistortionRendererConfig* config);
-
 /// Creates a new distortion renderer object. It uses OpenGL ES 3.0 as the
 /// rendering API. Must be called from the render thread.
 ///
@@ -454,14 +400,6 @@ CardboardDistortionRenderer* CardboardOpenGlEs2DistortionRenderer_create(
 /// @return         Distortion renderer object pointer
 CardboardDistortionRenderer* CardboardOpenGlEs3DistortionRenderer_create(
     const CardboardOpenGlEsDistortionRendererConfig* config);
-
-/// Creates a new distortion renderer object. It uses Metal as the rendering
-/// API. Must be called from the render thread.
-///
-/// @param[in]      config                  Distortion renderer configuration.
-/// @return         Distortion renderer object pointer
-CardboardDistortionRenderer* CardboardMetalDistortionRenderer_create(
-    const CardboardMetalDistortionRendererConfig* config);
 
 /// Creates a new distortion renderer object. It uses Vulkan as the rendering
 /// API. Must be called from the render thread.
@@ -480,19 +418,10 @@ CardboardDistortionRenderer* CardboardVulkanDistortionRenderer_create(
 /// @param[in]      renderer                Distortion renderer object pointer.
 void CardboardDistortionRenderer_destroy(CardboardDistortionRenderer* renderer);
 
-/// Sets the distortion Mesh for a particular eye. Must be called from render
-/// thread.
-///
-/// @pre @p renderer Must not be null.
-/// @pre @p mesh Must not be null.
-/// When it is unmet, a call to this function results in a no-op.
-///
-/// @param[in]      renderer                Distortion renderer object pointer.
-/// @param[in]      mesh                    Distortion mesh.
-/// @param[in]      eye                     Desired eye.
-void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
-                                         const CardboardMesh* mesh,
-                                         CardboardEye eye);
+void CardboardDistortionRenderer_setMesh(
+    CardboardDistortionRenderer* renderer,
+    const CardboardMesh* mesh
+);
 
 /// Renders eye textures to a rectangle in the display. Must be called from
 /// render thread.
@@ -523,9 +452,15 @@ void CardboardDistortionRenderer_setMesh(CardboardDistortionRenderer* renderer,
 /// @param[in]      left_eye                Left eye texture description.
 /// @param[in]      right_eye               Right eye texture description.
 void CardboardDistortionRenderer_renderEyeToDisplay(
-    CardboardDistortionRenderer* renderer, uint64_t target, int x, int y,
-    int width, int height, const CardboardEyeTextureDescription* left_eye,
-    const CardboardEyeTextureDescription* right_eye);
+    CardboardDistortionRenderer* renderer,
+    uint64_t target,
+    int x,
+    int y,
+    int width,
+    int height,
+    CardboardMesh* left_eye,
+    CardboardMesh* right_eye
+);
 
 /// @}
 
@@ -642,41 +577,6 @@ void CardboardHeadTracker_recenter(CardboardHeadTracker* head_tracker);
 /// of the head tracker.
 void CardboardHeadTracker_setLowPassFilter(CardboardHeadTracker* head_tracker,
                                            int cutoff_frequency);
-
-/// @}
-
-/////////////////////////////////////////////////////////////////////////////
-// QR Code Scanner
-/////////////////////////////////////////////////////////////////////////////
-/// @defgroup qrcode-scanner QR Code Scanner
-/// @brief This module manages the entire process of capturing, decoding and
-///     getting the device parameters from a QR code. It also saves and loads
-///     the device parameters to and from the external storage.
-/// @{
-
-/// Gets currently saved devices parameters. This function allocates memory for
-/// the parameters, so it must be released using @c ::CardboardQrCode_destroy.
-///
-/// @pre @p encoded_device_params Must not be null.
-/// @pre @p size Must not be null.
-/// When it is unmet, a call to this function results in a no-op and default
-/// values are returned (empty values).
-///
-/// @param[out]     encoded_device_params   Reference to the device parameters
-///     serialized using cardboard_device.proto.
-/// @param[out]     size                    Size in bytes of
-///     encoded_device_params.
-void CardboardQrCode_getSavedDeviceParams(uint8_t** encoded_device_params,
-                                          int* size);
-
-/// Releases memory used by the provided encoded_device_params array.
-///
-/// @pre @p encoded_device_params Must not be null.
-/// When it is unmet, a call to this function results in a no-op.
-///
-/// @param[in]      encoded_device_params   The device parameters serialized
-///     using cardboard_device.proto.
-void CardboardQrCode_destroy(const uint8_t* encoded_device_params);
 
 #ifdef __cplusplus
 }

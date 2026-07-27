@@ -46,7 +46,6 @@ dependencies {
     // TODO(b/213613345) Migrate to ML Kit.
     implementation 'com.google.android.gms:play-services-vision:20.1.3'
     implementation 'com.google.android.material:material:1.12.0'
-    implementation 'com.google.protobuf:protobuf-javalite:3.19.4'
     implementation project(":sdk")
 }
 
@@ -63,12 +62,42 @@ task extractNdk(type: Copy)  {
             from "${project.rootDir}/sdk/include/cardboard.h"
             into "libraries/"
         }
+        copy {
+            from "${project.rootDir}/sdk/include/device_params.h"
+            into "libraries/"
+        }
+        copy {
+            from "${project.rootDir}/sdk/include/distortion_mesh.h"
+            into "libraries/"
+        }
+        copy {
+            from "${project.rootDir}/sdk/include/distortion_mesh_matrix.h"
+            into "libraries/"
+        }
+        copy {
+            from "${project.rootDir}/sdk/include/matrix_4x4.h"
+            into "libraries/"
+        }
+        copy {
+            from "${project.rootDir}/sdk/include/polynomial_radial_distortion.h"
+            into "libraries/"
+        }
+        copy {
+            from "${project.rootDir}/sdk/include/viewport_params.h"
+            into "libraries/"
+        }
     }
 }
 
 task deleteNdk(type: Delete) {
     delete "libraries/jni"
     delete "libraries/cardboard.h"
+    delete "libraries/device_params.h"
+    delete "libraries/distortion_mesh.h"
+    delete "libraries/distortion_mesh_matrix.h"
+    delete "libraries/matrix_4x4.h"
+    delete "libraries/polynomial_radial_distortion.h"
+    delete "libraries/viewport_params.h"
 }
 
 build.dependsOn(extractNdk)

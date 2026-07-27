@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARDBOARD_SDK_UTIL_MATRIX_4X4_H_
-#define CARDBOARD_SDK_UTIL_MATRIX_4X4_H_
+#ifndef CARDBOARD_SDK_INCLUDE_MATRIX_4X4_H_
+#define CARDBOARD_SDK_INCLUDE_MATRIX_4X4_H_
 
 #include <array>
 
@@ -58,4 +58,4 @@ class Matrix4x4 {
 
 }  // namespace cardboard
 
-#endif  // CARDBOARD_SDK_UTIL_MATRIX4X4_H_
+#endif  // CARDBOARD_SDK_INCLUDE_UTIL_MATRIX4X4_H_

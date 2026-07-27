@@ -19,7 +19,6 @@
 
 #include <android/asset_manager.h>
 #include <jni.h>
-
 #include <array>
 #include <vector>
 
