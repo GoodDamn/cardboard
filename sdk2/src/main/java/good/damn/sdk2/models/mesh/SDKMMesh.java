@@ -7,9 +7,17 @@ import good.damn.sdk2.models.mesh.eye.SDKMMeshEye;
 
 public final class SDKMMesh {
 
-    @Nullable
-    public SDKIMeshDistortion distortion;
+    @NonNull
+    public final SDKIMeshDistortion meshDistortion;
 
     @NonNull
-    public SDKMMeshEye meshRender = new SDKMMeshEye();
+    public final SDKMMeshEye meshRender;
+
+    public SDKMMesh(
+        @NonNull final SDKIMeshDistortion meshDistortion,
+        @NonNull final SDKMMeshEye meshRender
+    ) {
+        this.meshDistortion = meshDistortion;
+        this.meshRender = meshRender;
+    }
 }

@@ -3,6 +3,7 @@ package good.damn.sdk2.models.mesh.distortion;
 import androidx.annotation.NonNull;
 import good.damn.sdk2.SDKPolynomialRadialDistortion;
 import good.damn.sdk2.matrix.SDKMatrix4x4;
+import good.damn.sdk2.models.SDKMParamsViewport;
 
 public final class SDKDistortion {
 
@@ -24,16 +25,19 @@ public final class SDKDistortion {
     public final float[] mFov = new float[4];
 
     public SDKDistortion(
-        @NonNull final SDKPolynomialRadialDistortion distortion,
-        float screen_width,
-        float screen_height,
-        float x_eye_offset_screen,
-        float y_eye_offset_screen,
-        float texture_width,
-        float texture_height,
-        float x_eye_offset_texture,
-        float y_eye_offset_texture
+            @NonNull final SDKPolynomialRadialDistortion distortion,
+            @NonNull final SDKMParamsViewport paramsScreen,
+            @NonNull final SDKMParamsViewport paramsTexture
     ) {
+        final float screen_width = paramsScreen.width;
+        final float screen_height = paramsScreen.height;
+        final float x_eye_offset_screen = paramsScreen.x_eye_offset;
+        final float y_eye_offset_screen = paramsScreen.y_eye_offset;
+        final float texture_width = paramsTexture.width;
+        final float texture_height = paramsTexture.height;
+        final float x_eye_offset_texture = paramsTexture.x_eye_offset;
+        final float y_eye_offset_texture = paramsTexture.y_eye_offset;
+
         final int nComponents = RESOLUTION * RESOLUTION * 2; // 2 components per vertex
         mVertices = new float[nComponents];
         mUvs = new float[nComponents];// 2 components per uv

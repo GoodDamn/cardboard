@@ -7,9 +7,10 @@ import good.damn.sdk2.models.SDKMParamsViewport;
 
 public abstract class SDKIMeshDistortion {
 
-    SDKMeshDistortionMatrix matrix;
+    @NonNull
+    public final SDKMeshDistortionMatrix matrix = new SDKMeshDistortionMatrix();
     @Nullable
-    public SDKDistortion distortion;
+    public SDKDistortion distortion = null;
 
     public abstract void calculateFov(
         @NonNull final float[] fov4
