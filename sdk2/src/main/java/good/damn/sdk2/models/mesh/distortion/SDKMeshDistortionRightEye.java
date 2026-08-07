@@ -1,7 +1,7 @@
 package good.damn.sdk2.models.mesh.distortion;
 
 import androidx.annotation.NonNull;
-import good.damn.sdk2.SDKIParamsDevice;
+import good.damn.sdk2.device.SDKIParamsDevice;
 import good.damn.sdk2.matrix.SDKMatrix4x4;
 import good.damn.sdk2.models.SDKMParamsViewport;
 

@@ -1,4 +1,4 @@
-package good.damn.sdk2;
+package good.damn.sdk2.device;
 
 import good.damn.sdk2.enums.CBEnumVerticalAlignment;
 

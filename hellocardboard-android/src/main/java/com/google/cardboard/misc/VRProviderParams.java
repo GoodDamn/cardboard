@@ -5,13 +5,12 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import good.damn.sdk2.models.SDKMParamsDevice;
 
 public final class VRProviderParams {
 
@@ -20,7 +19,7 @@ public final class VRProviderParams {
     private static final String DIR = "misc";
 
     @Nullable
-    public static final VRMParams extractPublicParams(
+    public static final SDKMParamsDevice extractPublicParams(
         @NonNull final Context context
     ) throws Exception {
 
@@ -61,7 +60,7 @@ public final class VRProviderParams {
         ).split("\n");
 
         Log.d(TAG, "extractPublicParams: " + Arrays.toString(strParams));
-        return new VRMParams(
+        return new SDKMParamsDevice(
             Float.parseFloat(strParams[0]),
             Float.parseFloat(strParams[1]),
             Float.parseFloat(strParams[2]),

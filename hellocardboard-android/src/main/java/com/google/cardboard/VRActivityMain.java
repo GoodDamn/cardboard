@@ -19,15 +19,12 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.provider.Settings;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -38,31 +35,22 @@ import android.widget.Toast;
 import good.damn.sdk2.models.SDKMParamsDevice;
 import com.google.cardboard.misc.VRProviderParams;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-/**
- * A Google Cardboard VR NDK sample application.
- *
- * <p>This is the main Activity for the sample application. It initializes a GLSurfaceView to allow
- * rendering.
- */
-// TODO(b/184737638): Remove decorator once the AndroidX migration is completed.
-public class VrActivity extends AppCompatActivity {
-  static {
-    System.loadLibrary("cardboard_jni");
-  }
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
-  private static final String TAG = VrActivity.class.getSimpleName();
+public final class VRActivityMain
+extends AppCompatActivity {
+
+  private static final String TAG = VRActivityMain.class.getSimpleName();
 
   // Permission request codes
   private static final int PERMISSIONS_REQUEST_CODE = 2;
 
-  // Opaque native pointer to the native CardboardApp instance.
-  // This object is owned by the VrActivity instance and passed to the native methods.
-  private long nativeApp;
+  private final VRApplication mApplication = new VRApplication();
 
   private GLSurfaceView glView;
 
@@ -92,14 +80,10 @@ public class VrActivity extends AppCompatActivity {
           );
       }
 
-      nativeApp = nativeOnCreate(
-        getAssets(),
-        paramsVr.getDistanceInterLens(),
-        paramsVr.getDistanceTrayToLens(),
-        paramsVr.getDistanceScreenToLens(),
-        paramsVr.getFov(),
-        paramsVr.getDistortionCoeffs()
-    );
+      mApplication.create(
+              getAssets(),
+              paramsVr
+      );
 
     @NonNull
     final DisplayMetrics metrics = getResources()
@@ -148,7 +132,7 @@ public class VrActivity extends AppCompatActivity {
   @Override
   protected void onPause() {
     super.onPause();
-    nativeOnPause(nativeApp);
+    mApplication.pause();
     glView.onPause();
   }
 
@@ -166,14 +150,13 @@ public class VrActivity extends AppCompatActivity {
     }
 
     glView.onResume();
-    nativeOnResume(nativeApp);
+    mApplication.resume();
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    nativeOnDestroy(nativeApp);
-    nativeApp = 0;
+    mApplication.destroy();
   }
 
   @Override
@@ -192,7 +175,12 @@ public class VrActivity extends AppCompatActivity {
 
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
-      nativeSetScreenParams(nativeApp, width, height, mDpiX, mDpiY);
+        mApplication.setScreenParams(
+                width,
+                height,
+                mDpiX,
+                mDpiY
+        );
     }
 
     @Override
@@ -263,33 +251,4 @@ public class VrActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
   }
-
-  private native long nativeOnCreate(
-    AssetManager assetManager,
-    float interLensDistance,
-    float trayToLensDistance,
-    float screenToLensDistance,
-    float[] fovHalfDegrees,
-    float[] distortionCoeffs
-  );
-
-  private native void nativeOnDestroy(long nativeApp);
-
-  private native void nativeOnSurfaceCreated(long nativeApp);
-
-  private native void nativeOnDrawFrame(long nativeApp);
-
-  private native void nativeOnTriggerEvent(long nativeApp);
-
-  private native void nativeOnPause(long nativeApp);
-
-  private native void nativeOnResume(long nativeApp);
-
-  private native void nativeSetScreenParams(
-          long nativeApp,
-          int width,
-          int height,
-          float xdpi,
-          float ydpi
-  );
 }
