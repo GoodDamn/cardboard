@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.google.cardboard.VrActivity"
+            android:name="com.google.cardboard.VRActivityMain"
             android:label="@string/title_activity_vr"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="landscape"

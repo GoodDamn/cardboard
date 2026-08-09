@@ -1,6 +1,7 @@
 package com.google.cardboard;
 
 import android.content.res.AssetManager;
+import android.opengl.GLES30;
 
 import good.damn.sdk2.SDKLensDistortion;
 import good.damn.sdk2.device.SDKParamsDeviceImpl;
@@ -28,6 +29,9 @@ public final class VRApplication {
 
     private float mScreenWidthMeters = 0.0f;
     private float mScreenHeightMeters = 0.0f;
+
+    private int mScreenWidth = 0;
+    private int mScreenHeight = 0;
 
     public final void destroy() {
 
@@ -67,6 +71,26 @@ public final class VRApplication {
 
     }
 
+    public final void draw() {
+        GLES30.glViewport(
+            0,
+            0,
+            mScreenWidth,
+            mScreenHeight
+        );
+
+        GLES30.glClearColor(
+            0.0f,
+            1.0f,
+            0.0f,
+            1.0f
+        );
+
+        GLES30.glClear(
+            GLES30.GL_COLOR_BUFFER_BIT
+        );
+    }
+
     public final void setScreenParams(
             final int width,
             final int height,
@@ -75,6 +99,8 @@ public final class VRApplication {
     ) {
         mScreenWidthMeters = ((width) / xdpi) * METERS_PER_INCH;
         mScreenHeightMeters = ((height) / ydpi) * METERS_PER_INCH;
+        mScreenWidth = width;
+        mScreenHeight = height;
         // screen_params_changed_ = true;
     }
 
@@ -89,6 +115,8 @@ public final class VRApplication {
                 mScreenHeightMeters,
                 meshes
         );
+
+        return true;
     }
 
 }

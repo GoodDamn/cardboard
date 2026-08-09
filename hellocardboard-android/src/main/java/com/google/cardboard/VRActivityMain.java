@@ -33,7 +33,9 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import good.damn.sdk2.models.SDKMParamsDevice;
+
 import com.google.cardboard.misc.VRProviderParams;
+import com.google.cardboard.renderer.VRRendererImpl;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -43,212 +45,179 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 public final class VRActivityMain
-extends AppCompatActivity {
+    extends AppCompatActivity {
 
-  private static final String TAG = VRActivityMain.class.getSimpleName();
+    private static final String TAG = VRActivityMain.class.getSimpleName();
 
-  // Permission request codes
-  private static final int PERMISSIONS_REQUEST_CODE = 2;
+    // Permission request codes
+    private static final int PERMISSIONS_REQUEST_CODE = 2;
 
-  private final VRApplication mApplication = new VRApplication();
+    private final VRApplication mApplication = new VRApplication();
 
-  private GLSurfaceView glView;
+    private GLSurfaceView glView;
 
-  private float mDpiX = 0f;
-  private float mDpiY = 0f;
-
-  @SuppressLint("ClickableViewAccessibility")
-  @Override
-  public void onCreate(Bundle savedInstance) {
-    super.onCreate(savedInstance);
-
-      @NonNull
-      SDKMParamsDevice paramsVr = null;
-      try {
-          paramsVr = VRProviderParams.extractPublicParams(
-                  this
-          );
-      } catch (Exception e) {}
-
-      if (paramsVr == null) {
-          paramsVr = new SDKMParamsDevice(
-                  0.060f,
-                  0.035f,
-                  0.042f,
-                  new float[] { 40.0f, 40.0f, 40.0f, 40.0f},
-                  new float[] {0.441f, 0.156f}
-          );
-      }
-
-      mApplication.create(
-              getAssets(),
-              paramsVr
-      );
-
-    @NonNull
-    final DisplayMetrics metrics = getResources()
-            .getDisplayMetrics();
-
-    mDpiX = metrics.xdpi;
-    mDpiY = metrics.ydpi;
-
-    setContentView(R.layout.activity_vr);
-    glView = findViewById(R.id.surface_view);
-    glView.setEGLContextClientVersion(2);
-    Renderer renderer = new Renderer();
-    glView.setRenderer(renderer);
-    glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-    glView.setOnTouchListener(
-        (v, event) -> {
-          if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            // Signal a trigger event.
-            glView.queueEvent(
-                () -> nativeOnTriggerEvent(nativeApp));
-            return true;
-          }
-          return false;
-        });
-
-    // TODO(b/139010241): Avoid that action and status bar are displayed when pressing settings
-    // button.
-    setImmersiveSticky();
-    View decorView = getWindow().getDecorView();
-    decorView.setOnSystemUiVisibilityChangeListener(
-        (visibility) -> {
-          if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-            setImmersiveSticky();
-          }
-        });
-
-    // Forces screen to max brightness.
-    //WindowManager.LayoutParams layout = getWindow().getAttributes();
-    //layout.screenBrightness = 1.f;
-    //getWindow().setAttributes(layout);
-
-    // Prevents screen from dimming/locking.
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
-    mApplication.pause();
-    glView.onPause();
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-
-    // On Android P and below, checks for activity to READ_EXTERNAL_STORAGE. When it is not granted,
-    // the application will request them. For Android Q and above, READ_EXTERNAL_STORAGE is optional
-    // and scoped storage will be used instead. If it is provided (but not checked) and there are
-    // device parameters saved in external storage those will be migrated to scoped storage.
-    if (VERSION.SDK_INT < VERSION_CODES.Q && !isReadExternalStorageEnabled()) {
-      requestPermissions();
-      return;
-    }
-
-    glView.onResume();
-    mApplication.resume();
-  }
-
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-    mApplication.destroy();
-  }
-
-  @Override
-  public void onWindowFocusChanged(boolean hasFocus) {
-    super.onWindowFocusChanged(hasFocus);
-    if (hasFocus) {
-      setImmersiveSticky();
-    }
-  }
-
-  private class Renderer implements GLSurfaceView.Renderer {
+    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-      nativeOnSurfaceCreated(nativeApp);
-    }
+    public void onCreate(Bundle savedInstance) {
+        super.onCreate(savedInstance);
 
-    @Override
-    public void onSurfaceChanged(GL10 gl10, int width, int height) {
-        mApplication.setScreenParams(
-                width,
-                height,
-                mDpiX,
-                mDpiY
+        @NonNull
+        SDKMParamsDevice paramsVr = null;
+        try {
+            paramsVr = VRProviderParams.extractPublicParams(
+                this
+            );
+        } catch (Exception e) {
+        }
+
+        if (paramsVr == null) {
+            paramsVr = new SDKMParamsDevice(
+                0.060f,
+                0.035f,
+                0.042f,
+                new float[]{40.0f, 40.0f, 40.0f, 40.0f},
+                new float[]{0.441f, 0.156f}
+            );
+        }
+
+        mApplication.create(
+            getAssets(),
+            paramsVr
         );
+
+        setContentView(R.layout.activity_vr);
+        glView = findViewById(R.id.surface_view);
+        glView.setEGLContextClientVersion(3);
+        glView.setRenderer(
+            new VRRendererImpl(
+                mApplication,
+                getResources().getDisplayMetrics()
+            )
+        );
+        glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+
+        // TODO(b/139010241): Avoid that action and status bar are displayed when pressing settings
+        // button.
+        setImmersiveSticky();
+        View decorView = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener(
+            (visibility) -> {
+                if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                    setImmersiveSticky();
+                }
+            });
+
+        // Forces screen to max brightness.
+        //WindowManager.LayoutParams layout = getWindow().getAttributes();
+        //layout.screenBrightness = 1.f;
+        //getWindow().setAttributes(layout);
+
+        // Prevents screen from dimming/locking.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
-    public void onDrawFrame(GL10 gl10) {
-      nativeOnDrawFrame(nativeApp);
+    protected void onPause() {
+        super.onPause();
+        mApplication.pause();
+        glView.onPause();
     }
-  }
 
-  /** Callback for when close button is pressed. */
-  public void closeSample(View view) {
-    Log.d(TAG, "Leaving VR sample");
-    finish();
-  }
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-  /**
-   * Checks for READ_EXTERNAL_STORAGE permission.
-   *
-   * @return whether the READ_EXTERNAL_STORAGE is already granted.
-   */
-  private boolean isReadExternalStorageEnabled() {
-    return ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-        == PackageManager.PERMISSION_GRANTED;
-  }
+        // On Android P and below, checks for activity to READ_EXTERNAL_STORAGE. When it is not granted,
+        // the application will request them. For Android Q and above, READ_EXTERNAL_STORAGE is optional
+        // and scoped storage will be used instead. If it is provided (but not checked) and there are
+        // device parameters saved in external storage those will be migrated to scoped storage.
+        if (VERSION.SDK_INT < VERSION_CODES.Q && !isReadExternalStorageEnabled()) {
+            requestPermissions();
+            return;
+        }
 
-  /** Handles the requests for activity permission to READ_EXTERNAL_STORAGE. */
-  private void requestPermissions() {
-    final String[] permissions = new String[] {Manifest.permission.READ_EXTERNAL_STORAGE};
-    ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
-  }
-
-  /**
-   * Callback for the result from requesting permissions.
-   *
-   * <p>When READ_EXTERNAL_STORAGE permission is not granted, the settings view will be launched
-   * with a toast explaining why it is required.
-   */
-  @Override
-  public void onRequestPermissionsResult(
-      int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    if (!isReadExternalStorageEnabled()) {
-      Toast.makeText(this, R.string.read_storage_permission, Toast.LENGTH_LONG).show();
-      if (!ActivityCompat.shouldShowRequestPermissionRationale(
-          this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-        // Permission denied with checking "Do not ask again". Note that in Android R "Do not ask
-        // again" is not available anymore.
-        launchPermissionsSettings();
-      }
-      finish();
+        glView.onResume();
+        mApplication.resume();
     }
-  }
 
-  private void launchPermissionsSettings() {
-    Intent intent = new Intent();
-    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-    intent.setData(Uri.fromParts("package", getPackageName(), null));
-    startActivity(intent);
-  }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mApplication.destroy();
+    }
 
-  private void setImmersiveSticky() {
-    getWindow()
-        .getDecorView()
-        .setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-  }
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            setImmersiveSticky();
+        }
+    }
+
+    /**
+     * Callback for when close button is pressed.
+     */
+    public void closeSample(View view) {
+        Log.d(TAG, "Leaving VR sample");
+        finish();
+    }
+
+    /**
+     * Checks for READ_EXTERNAL_STORAGE permission.
+     *
+     * @return whether the READ_EXTERNAL_STORAGE is already granted.
+     */
+    private boolean isReadExternalStorageEnabled() {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+            == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Handles the requests for activity permission to READ_EXTERNAL_STORAGE.
+     */
+    private void requestPermissions() {
+        final String[] permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
+        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    }
+
+    /**
+     * Callback for the result from requesting permissions.
+     *
+     * <p>When READ_EXTERNAL_STORAGE permission is not granted, the settings view will be launched
+     * with a toast explaining why it is required.
+     */
+    @Override
+    public void onRequestPermissionsResult(
+        int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (!isReadExternalStorageEnabled()) {
+            Toast.makeText(this, R.string.read_storage_permission, Toast.LENGTH_LONG).show();
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                // Permission denied with checking "Do not ask again". Note that in Android R "Do not ask
+                // again" is not available anymore.
+                launchPermissionsSettings();
+            }
+            finish();
+        }
+    }
+
+    private void launchPermissionsSettings() {
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.fromParts("package", getPackageName(), null));
+        startActivity(intent);
+    }
+
+    private void setImmersiveSticky() {
+        getWindow()
+            .getDecorView()
+            .setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
 }
