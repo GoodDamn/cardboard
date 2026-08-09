@@ -3,6 +3,10 @@ package com.google.cardboard;
 import android.content.res.AssetManager;
 import android.opengl.GLES30;
 
+import com.google.cardboard.opengl.VRGLProgram;
+import com.google.cardboard.opengl.VRGLProgramObj;
+import com.google.cardboard.utils.VRUtilsShaderCode;
+
 import good.damn.sdk2.SDKLensDistortion;
 import good.damn.sdk2.device.SDKParamsDeviceImpl;
 import good.damn.sdk2.models.SDKMParamsDevice;
@@ -16,6 +20,9 @@ import good.damn.sdk2.models.mesh.eye.SDKMMeshEye;
 public final class VRApplication {
 
     private static final float METERS_PER_INCH = 0.0254f;
+
+    @NonNull
+    private final VRGLProgramObj mProgramObj = new VRGLProgramObj();
 
     @NonNull
     private SDKParamsDeviceImpl mParamsDevice;
@@ -69,6 +76,10 @@ public final class VRApplication {
 
     public final void pause() {
 
+    }
+
+    public final void surfaceCreated() {
+        mProgramObj.create();
     }
 
     public final void draw() {
