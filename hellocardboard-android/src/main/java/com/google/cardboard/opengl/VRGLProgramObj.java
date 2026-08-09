@@ -15,6 +15,10 @@ public final class VRGLProgramObj {
     private int mAttrUv;
     private int mUniformModelViewProjection;
 
+    public final void use() {
+        mProgram.use();
+    }
+
     public final void create() {
         mProgram.compile(
             VRUtilsShaderCode.CODE_SHADER_VERTEX_OBJ,

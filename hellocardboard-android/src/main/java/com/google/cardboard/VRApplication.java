@@ -2,13 +2,18 @@ package com.google.cardboard;
 
 import android.content.res.AssetManager;
 import android.opengl.GLES30;
+import android.opengl.Matrix;
 
+import com.google.cardboard.opengl.VRGLMeshTextured;
 import com.google.cardboard.opengl.VRGLProgram;
 import com.google.cardboard.opengl.VRGLProgramObj;
+import com.google.cardboard.opengl.VRGLTexture;
 import com.google.cardboard.utils.VRUtilsShaderCode;
 
+import androidx.annotation.Nullable;
 import good.damn.sdk2.SDKLensDistortion;
 import good.damn.sdk2.device.SDKParamsDeviceImpl;
+import good.damn.sdk2.matrix.SDKMatrix4x4;
 import good.damn.sdk2.models.SDKMParamsDevice;
 
 import androidx.annotation.NonNull;
@@ -22,7 +27,15 @@ public final class VRApplication {
     private static final float METERS_PER_INCH = 0.0254f;
 
     @NonNull
+    private final float[] mvp = new float[16];
+    @NonNull
     private final VRGLProgramObj mProgramObj = new VRGLProgramObj();
+
+    @NonNull
+    private final VRGLMeshTextured meshRoom = new VRGLMeshTextured();
+
+    @NonNull
+    private final VRGLTexture mTextureRoom = new VRGLTexture();
 
     @NonNull
     private SDKParamsDeviceImpl mParamsDevice;
@@ -33,6 +46,9 @@ public final class VRApplication {
 
     @NonNull
     private SDKLensDistortion mLensDistortion;
+
+    @Nullable
+    private AssetManager mAssets = null;
 
     private float mScreenWidthMeters = 0.0f;
     private float mScreenHeightMeters = 0.0f;
@@ -48,6 +64,7 @@ public final class VRApplication {
             @NonNull final AssetManager assets,
             @NonNull final SDKMParamsDevice params
     ) {
+        mAssets = assets;
         mParamsDevice = new SDKParamsDeviceImpl(
             params
         );
@@ -80,6 +97,22 @@ public final class VRApplication {
 
     public final void surfaceCreated() {
         mProgramObj.create();
+
+        meshRoom.initialize(
+            mProgramObj.getAttrPosition(),
+            mProgramObj.getAttrUv(),
+            "CubeRoom.obj",
+            mAssets
+        );
+
+        mTextureRoom.initialize(
+            mAssets,
+            "CubeRoom_BakedDiffuse.png"
+        );
+
+        GLES30.glEnable(
+            GLES30.GL_DEPTH_TEST
+        );
     }
 
     public final void draw() {
@@ -98,8 +131,20 @@ public final class VRApplication {
         );
 
         GLES30.glClear(
-            GLES30.GL_COLOR_BUFFER_BIT
+            GLES30.GL_COLOR_BUFFER_BIT |
+                GLES30.GL_DEPTH_BUFFER_BIT
         );
+
+        mProgramObj.use();
+        GLES30.glUniformMatrix4fv(
+            mProgramObj.getUniformMVP(),
+            1,
+            false,
+            mvp,
+            0
+        );
+        mTextureRoom.bind();
+        meshRoom.draw();
     }
 
     public final void setScreenParams(
@@ -112,6 +157,39 @@ public final class VRApplication {
         mScreenHeightMeters = ((height) / ydpi) * METERS_PER_INCH;
         mScreenWidth = width;
         mScreenHeight = height;
+        Matrix.perspectiveM(
+            mvp,
+            0,
+            80f,
+            (float)mScreenWidth / mScreenHeight,
+            0.001f,
+            500f
+        );
+
+        float[] view = new float[16];
+        Matrix.setIdentityM(view, 0);
+        Matrix.setLookAtM(
+            view,
+            0,
+            0f,
+            3f,
+            3f,
+            0f,
+            3f,
+            0f,
+            0f,
+            1.0f,
+            0.0f
+        );
+
+        Matrix.multiplyMM(
+            mvp,
+            0,
+            mvp,
+            0,
+            view,
+            0
+        );
         // screen_params_changed_ = true;
     }
 

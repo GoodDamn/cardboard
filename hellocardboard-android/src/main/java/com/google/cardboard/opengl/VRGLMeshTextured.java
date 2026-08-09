@@ -74,12 +74,18 @@ public final class VRGLMeshTextured {
             mBufferIndices = createVectorBufferShort(
                 indices
             );
+
+            Log.d(TAG, "initialize: LAST_VALUES: POSITION: " + positions.lastElement() + " UV: " + uvs.lastElement() + " INDICES: " + indices.lastElement());
         } catch (IOException e) {
             Log.d(TAG, "initialize: " + e.getMessage());
         }
     }
 
     public final void draw() {
+        if (mBufferIndices == null) {
+            return;
+        }
+
         GLES30.glEnableVertexAttribArray(
             mAttrPosition
         );
@@ -120,13 +126,14 @@ public final class VRGLMeshTextured {
     ) {
         @NonNull
         final ShortBuffer buffer = ByteBuffer.allocateDirect(
-            input.size() * 4
+            input.size() * 2
         ).order(
             ByteOrder.nativeOrder()
         ).asShortBuffer();
 
         for (int i = 0; i < input.size(); i++) {
             buffer.put(
+                i,
                 input.get(i)
             );
         }
@@ -148,6 +155,7 @@ public final class VRGLMeshTextured {
 
         for (int i = 0; i < input.size(); i++) {
             buffer.put(
+                i,
                 input.get(i)
             );
         }

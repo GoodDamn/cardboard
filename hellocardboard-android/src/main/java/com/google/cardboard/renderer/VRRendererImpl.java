@@ -35,7 +35,7 @@ implements GLSurfaceView.Renderer {
         @NonNull final GL10 g,
         @NonNull final EGLConfig config
     ) {
-
+        mApplication.surfaceCreated();
     }
 
     @Override

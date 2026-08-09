@@ -4,15 +4,20 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public final class VRUtilsLoaderObj {
 
@@ -36,32 +41,32 @@ public final class VRUtilsLoaderObj {
         // If the file hasn't been uncompressed, load it to the internal storage.
         // Note that AAsset_openFileDescriptor doesn't support compressed
         // files (.obj).
-        @NonNull final AssetFileDescriptor asset = assets.openFd(
-            fileName
+
+        @NonNull final BufferedReader stream = new BufferedReader(
+            new InputStreamReader(
+                assets.open(
+                    fileName,
+                    AssetManager.ACCESS_STREAMING
+                )
+            )
         );
 
-        @NonNull final InputStream stream = asset.createInputStream();
-
-        int readed;
-        byte[] line_header = new byte[128];
+        @Nullable
+        String readed = null;
         while (true) {
-            readed = stream.read(
-                line_header
-            );
+            readed = stream.readLine();
 
-            if (readed == -1) {
+            if (readed == null) {
                 break;
             }
 
-            if (line_header[0] == '\0') {
+            if (readed.charAt(0) == '\0') {
                 continue;
             }
 
-            if (line_header[0] == 'v' && line_header[1] == 'n') {
+            if (readed.charAt(0) == 'v' && readed.charAt(1) == 'n') {
                 // Parse vertex normal.
-                @NonNull final String[] splitted = new String(
-                    line_header
-                ).split("\\s+");
+                @NonNull final String[] splitted = readed.split("\\s+");
 
                 temp_normals.add(
                     Float.parseFloat(splitted[1])
@@ -77,11 +82,9 @@ public final class VRUtilsLoaderObj {
                 continue;
             }
 
-            if (line_header[0] == 'v' && line_header[1] == 't') {
+            if (readed.charAt(0) == 'v' && readed.charAt(1) == 't') {
                 // Parse texture uv.
-                @NonNull final String[] splitted = new String(
-                    line_header
-                ).split("\\s+");
+                @NonNull final String[] splitted = readed.split("\\s+");
 
                 temp_uvs.add(
                     Float.parseFloat(splitted[1])
@@ -94,11 +97,9 @@ public final class VRUtilsLoaderObj {
                 continue;
             }
 
-            if (line_header[0] == 'v') {
+            if (readed.charAt(0) == 'v') {
                 // Parse vertex.
-                @NonNull final String[] splitted = new String(
-                    line_header
-                ).split("\\s+");
+                @NonNull final String[] splitted = readed.split("\\s+");
 
                 temp_positions.add(
                     Float.parseFloat(splitted[1])
@@ -114,16 +115,16 @@ public final class VRUtilsLoaderObj {
                 continue;
             }
 
-            if (line_header[0] == 'f') {
+            if (readed.charAt(0) == 'f') {
                 // Actual faces information starts from the second character.
 
                 int[] vertex_index = new int[4];
                 int[] normal_index = new int[4];
                 int[] texture_index = new int[4];
 
-                @NonNull final String[] per_vertex_info_list = new String(
-                    line_header
-                ).split("\\s+");
+                @NonNull
+                final String[] per_vertex_info_list = readed.substring(2).split("\\s+");
+
                 /*Vector<Character> per_vertex_info_list = new Vector<>();
                 char *per_vertex_info_list_c_str;
                 char *face_line_iter = face_line;
@@ -146,6 +147,8 @@ public final class VRUtilsLoaderObj {
 
                     while (tokenizer.hasMoreTokens()) {
                         @NonNull final String per_vertex_info = tokenizer.nextToken();
+
+                        Log.d(TAG, "loadObjFile: PER_VERTEX_INFO: " + per_vertex_info + ";;; PER_VERTEX_INFO_LIST: " + Arrays.toString(per_vertex_info_list));
                         switch (per_vertex_info_count) {
                             case 0:
                                 // Write to vertex indices.
@@ -220,7 +223,7 @@ public final class VRUtilsLoaderObj {
             return false;
         }
 
-        for (int i = 0; i < vertex_indices.capacity(); i++) {
+        for (int i = 0; i < vertex_indices.size(); i++) {
             int vertex_index = ((int)vertex_indices.get(i)) & 0xffff;
             outPosition.add(temp_positions.get(vertex_index * 3));
             outPosition.add(temp_positions.get(vertex_index * 3 + 1));
