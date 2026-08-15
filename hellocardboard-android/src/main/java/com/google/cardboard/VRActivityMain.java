@@ -17,8 +17,12 @@ package com.google.cardboard;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
+import android.hardware.SensorPrivacyManager;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Build.VERSION;
@@ -32,8 +36,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import good.damn.sdk2.models.SDKMParamsDevice;
 
+import com.google.cardboard.listeners.VRListenerSensorGyroscope;
 import com.google.cardboard.misc.VRProviderParams;
 import com.google.cardboard.renderer.VRRendererImpl;
 
@@ -45,7 +51,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 public final class VRActivityMain
-    extends AppCompatActivity {
+extends AppCompatActivity {
 
     private static final String TAG = VRActivityMain.class.getSimpleName();
 
@@ -114,6 +120,27 @@ public final class VRActivityMain
 
         // Prevents screen from dimming/locking.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        @NonNull
+        final SensorManager managerSensor = (SensorManager) getSystemService(
+            Context.SENSOR_SERVICE
+        );
+
+        @Nullable
+        final Sensor sensorGyroscope = managerSensor.getDefaultSensor(
+            Sensor.TYPE_GYROSCOPE
+        );
+
+        if (sensorGyroscope == null) {
+            return;
+        }
+
+        managerSensor.registerListener(
+            new VRListenerSensorGyroscope(),
+            sensorGyroscope,
+            SensorManager.SENSOR_DELAY_GAME
+        );
+
     }
 
     @Override
