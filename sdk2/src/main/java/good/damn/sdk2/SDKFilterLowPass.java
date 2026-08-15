@@ -101,7 +101,7 @@ public final class SDKFilterLowPass {
 
     @NonNull
     public final SDVector3 getFilteredData() {
-        return mFilteredData;
+        return mFilteredData.copy();
     }
 
     public final boolean isInitialized() {
