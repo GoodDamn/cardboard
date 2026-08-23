@@ -54,7 +54,8 @@ JNI_METHOD(jlong, nativeOnCreate)
     jfloat trayToLensDistance,
     jfloat screenToLensDistance,
     jfloatArray fovHalfDegrees,
-    jfloatArray distortionCoeffs
+    jfloatArray distortionCoeffs,
+    jobject instanceDrawer
 ) {
   return jptr(new ndk_hello_cardboard::HelloCardboardApp(
       javaVm,
@@ -64,7 +65,8 @@ JNI_METHOD(jlong, nativeOnCreate)
       trayToLensDistance,
       screenToLensDistance,
       fovHalfDegrees,
-      distortionCoeffs
+      distortionCoeffs,
+      instanceDrawer
       ));
 }
 
@@ -79,8 +81,10 @@ JNI_METHOD(void, nativeOnSurfaceCreated)
 }
 
 JNI_METHOD(void, nativeOnDrawFrame)
-(JNIEnv* /*env*/, jobject /*obj*/, jlong native_app) {
-  native(native_app)->OnDrawFrame();
+(JNIEnv* env, jobject /*obj*/, jlong native_app) {
+  native(native_app)->OnDrawFrame(
+      env
+  );
 }
 
 JNI_METHOD(void, nativeOnTriggerEvent)

@@ -113,7 +113,8 @@ namespace ndk_hello_cardboard {
         jfloat trayToLensDistance,
         jfloat screenToLensDistance,
         jfloatArray fovHalfDegrees,
-        jfloatArray distortionCoeffs
+        jfloatArray distortionCoeffs,
+        jobject instanceDrawer
     ) : head_tracker_(nullptr),
         lens_distortion_(nullptr),
         distortion_renderer_(nullptr),
@@ -124,17 +125,16 @@ namespace ndk_hello_cardboard {
         depthRenderBuffer_(0),
         framebuffer_(0),
         texture_(0),
-        obj_program_(0),
-        obj_position_param_(0),
-        obj_uv_param_(0),
-        obj_modelview_projection_param_(0),
         target_object_meshes_(kTargetMeshCount),
         target_object_not_selected_textures_(kTargetMeshCount),
         target_object_selected_textures_(kTargetMeshCount),
-        cur_target_object_(RandomUniformInt(kTargetMeshCount)
-        ) {
+        cur_target_object_(RandomUniformInt(kTargetMeshCount)) {
         JNIEnv *env;
         vm->GetEnv((void **) &env, JNI_VERSION_1_6);
+
+        instanceDrawer_ = env->NewGlobalRef(
+            instanceDrawer
+        );
 
         mDeviceParams.setDistanceInterLens(
             interLensDistance
@@ -207,7 +207,7 @@ namespace ndk_hello_cardboard {
     }
 
     void HelloCardboardApp::OnSurfaceCreated(JNIEnv *env) {
-        const int obj_vertex_shader =
+        /*const int obj_vertex_shader =
             LoadGLShader(GL_VERTEX_SHADER, kObjVertexShader);
         const int obj_fragment_shader =
             LoadGLShader(GL_FRAGMENT_SHADER, kObjFragmentShader);
@@ -247,7 +247,7 @@ namespace ndk_hello_cardboard {
         HELLOCARDBOARD_CHECK(target_object_not_selected_textures_[2].Initialize(
             env, java_asset_mgr_, "TriSphere_Blue_BakedDiffuse.png"));
         HELLOCARDBOARD_CHECK(target_object_selected_textures_[2].Initialize(
-            env, java_asset_mgr_, "TriSphere_Pink_BakedDiffuse.png"));
+            env, java_asset_mgr_, "TriSphere_Pink_BakedDiffuse.png"));*/
 
         // Target object first appears directly in front of user.
         model_target_ = GetTranslationMatrix({0.0f, 1.5f, kMinTargetDistance});
@@ -286,8 +286,33 @@ namespace ndk_hello_cardboard {
         modelview_projection_room_ = projection_matrix * eye_view;
     }
 
-    void HelloCardboardApp::OnDrawFrame() {
-        if (!UpdateDeviceParams()) {
+    void HelloCardboardApp::OnDrawFrame(
+        JNIEnv* env
+    ) {
+        if (!UpdateDeviceParams() || instanceDrawer_ == nullptr) {
+            return;
+        }
+
+        // get drawer instance
+        jclass interfaceDrawer = env->GetObjectClass(
+            instanceDrawer_
+        );
+
+        if (interfaceDrawer == nullptr) {
+            LOGD("interfaceDrawer == nullptr");
+            throw std::exception();
+            return;
+        }
+
+        jmethodID instanceDrawerMethod_ = env->GetMethodID(
+            interfaceDrawer,
+            "onDraw",
+            "()V"
+        );
+
+        if (instanceDrawerMethod_ == nullptr) {
+            LOGD("methodId == nullptr");
+            throw std::exception();
             return;
         }
 
@@ -321,8 +346,10 @@ namespace ndk_hello_cardboard {
         );
 
         // Draw room and target
-        DrawWorld();
-
+        env->CallVoidMethod(
+            instanceDrawer_,
+            instanceDrawerMethod_
+        );
 
         // RightEye
         glViewport(
@@ -337,7 +364,14 @@ namespace ndk_hello_cardboard {
         );
 
         // Draw room and target
-        DrawWorld();
+        env->CallVoidMethod(
+            instanceDrawer_,
+            instanceDrawerMethod_
+        );
+
+        env->DeleteLocalRef(
+            interfaceDrawer
+        );
 
         // Render
         CardboardDistortionRenderer_renderEyeToDisplay(
@@ -499,12 +533,7 @@ namespace ndk_hello_cardboard {
                Quatf::FromXYZW(&out_orientation[0]).ToMatrix();
     }
 
-    void HelloCardboardApp::DrawWorld() {
-        DrawRoom();
-        DrawTarget();
-    }
-
-    void HelloCardboardApp::DrawTarget() {
+    /*void HelloCardboardApp::DrawTarget() {
         glUseProgram(obj_program_);
 
         std::array<float, 16> target_array = modelview_projection_target_.ToGlArray();
@@ -532,7 +561,7 @@ namespace ndk_hello_cardboard {
         room_.Draw();
 
         CHECKGLERROR("DrawRoom");
-    }
+    }*/
 
     void HelloCardboardApp::HideTarget() {
         cur_target_object_ = RandomUniformInt(kTargetMeshCount);

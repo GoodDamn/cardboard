@@ -56,7 +56,8 @@ class HelloCardboardApp {
       jfloat trayToLensDistance,
       jfloat screenToLensDistance,
       jfloatArray fovHalfDegrees,
-      jfloatArray distortionCoeffs);
+      jfloatArray distortionCoeffs,
+      jobject instanceDrawer);
 
   ~HelloCardboardApp();
 
@@ -84,7 +85,9 @@ class HelloCardboardApp {
   /**
    * Draws the scene. This should be called on the rendering thread.
    */
-  void OnDrawFrame();
+  void OnDrawFrame(
+      JNIEnv* env
+  );
 
   /**
    * Hides the target object if it's being targeted.
@@ -141,24 +144,9 @@ class HelloCardboardApp {
    */
   Matrix4x4 GetPose();
 
-  /**
-   * Draws all world-space objects for the given eye.
-   */
-  void DrawWorld();
-
   void calculateDrawMatrices(
       CardboardMesh* mesh
   );
-
-  /**
-   * Draws the target object.
-   */
-  void DrawTarget();
-
-  /**
-   * Draws the room.
-   */
-  void DrawRoom();
 
   /**
    * Finds a new random position for the target object.
@@ -192,10 +180,12 @@ class HelloCardboardApp {
   GLuint framebuffer_;        // framebuffer object
   GLuint texture_;            // distortion texture
 
-  GLuint obj_program_;
-  GLuint obj_position_param_;
-  GLuint obj_uv_param_;
-  GLuint obj_modelview_projection_param_;
+  jobject instanceDrawer_;
+
+  //GLuint obj_program_;
+  //GLuint obj_position_param_;
+  //GLuint obj_uv_param_;
+  //GLuint obj_modelview_projection_param_;
 
   Matrix4x4 head_view_;
   Matrix4x4 model_target_;
