@@ -66,6 +66,14 @@ public final class SDVector3 {
         mData[2] = 0f;
     }
 
+    public final double length() {
+        return Math.sqrt(
+            mData[0] * mData[0] +
+            mData[1] * mData[1] +
+            mData[2] + mData[2]
+        );
+    }
+
     @NonNull
     public final SDVector3 add(
         @NonNull final SDVector3 v

@@ -1,8 +1,9 @@
-package good.damn.sdk2;
+package good.damn.sdk2.filters;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import androidx.annotation.NonNull;
+import good.damn.sdk2.SDVector3;
 
 public final class SDKFilterMean {
 
