@@ -99,23 +99,6 @@ float AngleBetweenVectors(const std::array<float, 4>& vec1,
 int64_t GetBootTimeNano();
 
 /**
- * Generates a random floating point number between |min| and |max|.
- *
- * @param min Minimum range
- * @param max Maximum range
- * @return Random float number
- */
-float RandomUniformFloat(float min, float max);
-
-/**
- * Generates a random integer in the range [0, max_val).
- *
- * @param max_val Maximum range
- * @return Random int number
- */
-int RandomUniformInt(int max_val);
-
-/**
  * Checks for OpenGL errors, and crashes if one has occurred.  Note that this
  * can be an expensive call, so real applications should call this rarely.
  *
@@ -135,51 +118,6 @@ void CheckGlError(const char* file, int line, const char* label);
  * @return The shader object handler, or 0 if there's an error.
  */
 GLuint LoadGLShader(GLenum type, const char* shader_source);
-
-class TexturedMesh {
- public:
-  TexturedMesh() = default;
-
-  // Initializes the mesh from a .obj file.
-  //
-  // @return True if initialization was successful.
-  bool Initialize(GLuint position_attrib, GLuint uv_attrib,
-                  const std::string& obj_file_path, AAssetManager* asset_mgr);
-
-  // Draws the mesh. The u_MVP uniform should be set before calling this using
-  // glUniformMatrix4fv(), and a texture should be bound to GL_TEXTURE0.
-  void Draw() const;
-
- private:
-  std::vector<GLfloat> vertices_;
-  std::vector<GLfloat> uv_;
-  std::vector<GLushort> indices_;
-  GLuint position_attrib_{0};
-  GLuint uv_attrib_{0};
-};
-
-class Texture {
- public:
-  Texture() = default;
-
-  ~Texture();
-
-  // Initializes the texture.
-  //
-  // After this is called the texture will be bound, replacing any previously
-  // bound texture.
-  //
-  // @return True if initialization was successful.
-  // TODO(b/138789810): Share some parts of the code between Android and iOS samples.
-  bool Initialize(JNIEnv* env, jobject java_asset_mgr,
-                  const std::string& texture_path);
-
-  // Binds the texture, replacing any previously bound texture.
-  void Bind() const;
-
- private:
-  GLuint texture_id_{0};
-};
 
 }  // namespace ndk_hello_cardboard
 

@@ -31,23 +31,10 @@ namespace ndk_hello_cardboard {
 
     namespace {
 
-// The objects are about 1 meter in radius, so the min/max target distance are
-// set so that the objects are always within the room (which is about 5 meters
-// across) and the reticle is always closer than any objects.
-        constexpr float kMinTargetHeight = 0.5f;
-        constexpr float kMaxTargetHeight = kMinTargetHeight + 3.0f;
-
 // 6 Hz cutoff frequency for the velocity filter of the head tracker.
         constexpr int kVelocityFilterCutoffFrequency = 6;
 
         constexpr uint64_t kPredictionTimeWithoutVsyncNanos = 50000000;
-
-// Angle threshold for determining whether the controller is pointing at the
-// object.
-        constexpr float kAngleLimit = 0.2f;
-
-// Number of different possible targets
-        constexpr int kTargetMeshCount = 3;
 
         constexpr float kMetersPerInch = 0.0254f;
 
@@ -78,7 +65,6 @@ namespace ndk_hello_cardboard {
     HelloCardboardApp::HelloCardboardApp(
         JavaVM *vm,
         jobject obj,
-        jobject asset_mgr_obj,
         jfloat interLensDistance,
         jfloat trayToLensDistance,
         jfloat screenToLensDistance,
@@ -94,11 +80,7 @@ namespace ndk_hello_cardboard {
         screen_height_(0),
         depthRenderBuffer_(0),
         framebuffer_(0),
-        texture_(0),
-        target_object_meshes_(kTargetMeshCount),
-        target_object_not_selected_textures_(kTargetMeshCount),
-        target_object_selected_textures_(kTargetMeshCount),
-        cur_target_object_(RandomUniformInt(kTargetMeshCount)) {
+        texture_(0) {
         JNIEnv *env;
         vm->GetEnv((void **) &env, JNI_VERSION_1_6);
 
@@ -171,55 +153,6 @@ namespace ndk_hello_cardboard {
         CardboardHeadTracker_destroy(head_tracker_);
         CardboardLensDistortion_destroy(lens_distortion_);
         CardboardDistortionRenderer_destroy(distortion_renderer_);
-    }
-
-    void HelloCardboardApp::OnSurfaceCreated(JNIEnv *env) {
-        /*const int obj_vertex_shader =
-            LoadGLShader(GL_VERTEX_SHADER, kObjVertexShader);
-        const int obj_fragment_shader =
-            LoadGLShader(GL_FRAGMENT_SHADER, kObjFragmentShader);
-
-        obj_program_ = glCreateProgram();
-        glAttachShader(obj_program_, obj_vertex_shader);
-        glAttachShader(obj_program_, obj_fragment_shader);
-        glLinkProgram(obj_program_);
-        glUseProgram(obj_program_);
-
-        CHECKGLERROR("Obj program");
-
-        obj_position_param_ = glGetAttribLocation(obj_program_, "a_Position");
-        obj_uv_param_ = glGetAttribLocation(obj_program_, "a_UV");
-        obj_modelview_projection_param_ = glGetUniformLocation(obj_program_, "u_MVP");
-
-        CHECKGLERROR("Obj program params");
-
-        HELLOCARDBOARD_CHECK(room_.Initialize(obj_position_param_, obj_uv_param_,
-                                              "CubeRoom.obj", asset_mgr_));
-        HELLOCARDBOARD_CHECK(
-            room_tex_.Initialize(env, java_asset_mgr_, "CubeRoom_BakedDiffuse.png"));
-        HELLOCARDBOARD_CHECK(target_object_meshes_[0].Initialize(
-            obj_position_param_, obj_uv_param_, "Icosahedron.obj", asset_mgr_));
-        HELLOCARDBOARD_CHECK(target_object_not_selected_textures_[0].Initialize(
-            env, java_asset_mgr_, "Icosahedron_Blue_BakedDiffuse.png"));
-        HELLOCARDBOARD_CHECK(target_object_selected_textures_[0].Initialize(
-            env, java_asset_mgr_, "Icosahedron_Pink_BakedDiffuse.png"));
-        HELLOCARDBOARD_CHECK(target_object_meshes_[1].Initialize(
-            obj_position_param_, obj_uv_param_, "QuadSphere.obj", asset_mgr_));
-        HELLOCARDBOARD_CHECK(target_object_not_selected_textures_[1].Initialize(
-            env, java_asset_mgr_, "QuadSphere_Blue_BakedDiffuse.png"));
-        HELLOCARDBOARD_CHECK(target_object_selected_textures_[1].Initialize(
-            env, java_asset_mgr_, "QuadSphere_Pink_BakedDiffuse.png"));
-        HELLOCARDBOARD_CHECK(target_object_meshes_[2].Initialize(
-            obj_position_param_, obj_uv_param_, "TriSphere.obj", asset_mgr_));
-        HELLOCARDBOARD_CHECK(target_object_not_selected_textures_[2].Initialize(
-            env, java_asset_mgr_, "TriSphere_Blue_BakedDiffuse.png"));
-        HELLOCARDBOARD_CHECK(target_object_selected_textures_[2].Initialize(
-            env, java_asset_mgr_, "TriSphere_Pink_BakedDiffuse.png"));*/
-
-        // Target object first appears directly in front of user.
-        model_target_ = GetTranslationMatrix({0.0f, 1.5f, 2.5f});
-
-        CHECKGLERROR("OnSurfaceCreated");
     }
 
     void HelloCardboardApp::SetScreenParams(
@@ -330,18 +263,15 @@ namespace ndk_hello_cardboard {
         CHECKGLERROR("onDrawFrame");
     }
 
-    void HelloCardboardApp::OnTriggerEvent() {
-        /*if (IsPointingAtTarget()) {
-            HideTarget();
-        }*/
-    }
-
     void HelloCardboardApp::OnPause() { CardboardHeadTracker_pause(head_tracker_); }
 
     void HelloCardboardApp::getPose(
         JNIEnv* env,
-        jfloatArray model_matrix,
-        jint index_eye
+        jfloatArray matrixOut,
+        jint index_eye,
+        jfloat positionX,
+        jfloat positionY,
+        jfloat positionZ
     ) {
         if (meshes.empty()) {
             return;
@@ -362,10 +292,10 @@ namespace ndk_hello_cardboard {
         Matrix4x4 b = projection_matrix *
                eye_matrix *
                matrixPose *
-               GetTranslationMatrix({0.0f, -1.7f, 0.0f});
+               GetTranslationMatrix({positionX, positionY, positionZ});
 
         env->SetFloatArrayRegion(
-            model_matrix,
+            matrixOut,
             0,
             16,
             b.m[0]
@@ -508,59 +438,17 @@ namespace ndk_hello_cardboard {
                Quatf::FromXYZW(&out_orientation[0]).ToMatrix();
     }
 
-    /*void HelloCardboardApp::DrawTarget() {
-        glUseProgram(obj_program_);
-
-        std::array<float, 16> target_array = modelview_projection_target_.ToGlArray();
-        glUniformMatrix4fv(obj_modelview_projection_param_, 1, GL_FALSE,
-                           target_array.data());
-
-        if (IsPointingAtTarget()) {
-            target_object_selected_textures_[cur_target_object_].Bind();
-        } else {
-            target_object_not_selected_textures_[cur_target_object_].Bind();
-        }
-        target_object_meshes_[cur_target_object_].Draw();
-
-        CHECKGLERROR("DrawTarget");
-    }
-
-    void HelloCardboardApp::DrawRoom() {
-        glUseProgram(obj_program_);
-
-        std::array<float, 16> room_array = modelview_projection_room_.ToGlArray();
-        glUniformMatrix4fv(obj_modelview_projection_param_, 1, GL_FALSE,
-                           room_array.data());
-
-        room_tex_.Bind();
-        room_.Draw();
-
-        CHECKGLERROR("DrawRoom");
-    }*/
-
-    void HelloCardboardApp::HideTarget() {
-        cur_target_object_ = RandomUniformInt(kTargetMeshCount);
-
-        float angle = RandomUniformFloat(-M_PI, M_PI);
-        float distance = RandomUniformFloat(2.5f, 3.5f);
-        float height = RandomUniformFloat(kMinTargetHeight, kMaxTargetHeight);
-        std::array<float, 3> target_position = {std::cos(angle) * distance, height,
-                                                std::sin(angle) * distance};
-
-        model_target_ = GetTranslationMatrix(target_position);
-    }
-
-    bool HelloCardboardApp::IsPointingAtTarget() {
+    /*bool HelloCardboardApp::IsPointingAtTarget() {
         // Compute vectors pointing towards the reticle and towards the target object
         // in head space.
         Matrix4x4 head_from_target = matrixPose * model_target_;
 
         const std::array<float, 4> unit_quaternion = {0.f, 0.f, 0.f, 1.f};
-        const std::array<float, 4> point_vector = {0.f, 0.f, -1.f, 0.f};
         const std::array<float, 4> target_vector = head_from_target * unit_quaternion;
 
+        const std::array<float, 4> point_vector = {0.f, 0.f, -1.f, 0.f};
         float angle = AngleBetweenVectors(point_vector, target_vector);
-        return angle < kAngleLimit;
-    }
+        return angle < 0.2f;
+    }*/
 
 }  // namespace ndk_hello_cardboard

@@ -49,7 +49,6 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
 JNI_METHOD(jlong, nativeOnCreate)
 (JNIEnv* /*env*/,
     jobject obj,
-    jobject asset_mgr,
     jfloat interLensDistance,
     jfloat trayToLensDistance,
     jfloat screenToLensDistance,
@@ -60,7 +59,6 @@ JNI_METHOD(jlong, nativeOnCreate)
   return jptr(new ndk_hello_cardboard::HelloCardboardApp(
       javaVm,
       obj,
-      asset_mgr,
       interLensDistance,
       trayToLensDistance,
       screenToLensDistance,
@@ -75,21 +73,11 @@ JNI_METHOD(void, nativeOnDestroy)
   delete native(native_app);
 }
 
-JNI_METHOD(void, nativeOnSurfaceCreated)
-(JNIEnv* env, jobject /*obj*/, jlong native_app) {
-  native(native_app)->OnSurfaceCreated(env);
-}
-
 JNI_METHOD(void, nativeOnDrawFrame)
 (JNIEnv* env, jobject /*obj*/, jlong native_app) {
   native(native_app)->OnDrawFrame(
       env
   );
-}
-
-JNI_METHOD(void, nativeOnTriggerEvent)
-(JNIEnv* /*env*/, jobject /*obj*/, jlong native_app) {
-  native(native_app)->OnTriggerEvent();
 }
 
 JNI_METHOD(void, nativeOnPause)
@@ -124,11 +112,17 @@ Java_com_google_cardboard_VrActivity_getPose(
     jobject thiz,
     jlong native_app,
     jfloatArray model_matrix,
-    jint index_eye
-    ) {
+    jint index_eye,
+    jfloat positionX,
+    jfloat positionY,
+    jfloat positionZ
+) {
     native(native_app)->getPose(
         env,
         model_matrix,
-        index_eye
+        index_eye,
+        positionX,
+        positionY,
+        positionZ
     );
 }

@@ -93,72 +93,50 @@ implements VRIDrawer {
     private final VRGLTexture mTextureRoom = new VRGLTexture();
 
     @NonNull
-    private final SDKMatrix4x4 matrixPosition = new SDKMatrix4x4();
+    private final float[] matrixOut = new float[16];
 
-    @NonNull
-    private final float[] matrixRaw = new float[16];
+    private static final float RADIUS = 4f;
+
+    private long mPrevTime = System.currentTimeMillis();
+
+    private float mPath = 0.0f;
 
     @Override
     public void onDraw(
         int indexEye
     ) {
-        matrixPosition.toArray(
-            matrixRaw
-        );
-
         mProgramObj.use();
+
+        final long currentTime = System.currentTimeMillis();
+        long dt = currentTime - mPrevTime;
+        mPrevTime = currentTime;
+
+        mPath += dt * 0.0001f;
 
         getPose(
             nativeApp,
-            matrixRaw,
-            indexEye
+            matrixOut,
+            indexEye,
+            (float) (Math.sin(mPath) * RADIUS),
+            -1.7f,
+            (float) (Math.cos(mPath) * RADIUS)
         );
-
-        Log.d(TAG, "onDraw: " + indexEye + " matrixRaw: " + Arrays.toString(matrixRaw));
 
         GLES30.glUniformMatrix4fv(
             mProgramObj.getUniformMVP(),
             1,
             false,
-            matrixRaw,
+            matrixOut,
             0
         );
         mTextureRoom.bind();
         meshRoom.draw();
-
-        /*glUseProgram(obj_program_);
-
-        std::array<float, 16> room_array = modelview_projection_room_.ToGlArray();
-        glUniformMatrix4fv(obj_modelview_projection_param_, 1, GL_FALSE,
-            room_array.data());
-
-        room_tex_.Bind();
-        room_.Draw();*/
-
-
-        ///////////////////////////////
-        /*glUseProgram(obj_program_);
-
-        std::array<float, 16> target_array = modelview_projection_target_.ToGlArray();
-        glUniformMatrix4fv(obj_modelview_projection_param_, 1, GL_FALSE,
-            target_array.data());
-
-        if (IsPointingAtTarget()) {
-            target_object_selected_textures_[cur_target_object_].Bind();
-        } else {
-            target_object_not_selected_textures_[cur_target_object_].Bind();
-        }
-        target_object_meshes_[cur_target_object_].Draw();*/
     }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
-
-        SDKMatrix4x4.writeIdentity(
-            matrixPosition
-        );
 
         @NonNull
         SDKMParamsDevice paramsVr = null;
@@ -180,7 +158,6 @@ implements VRIDrawer {
         }
 
         nativeApp = nativeOnCreate(
-            getAssets(),
             paramsVr.getDistanceInterLens(),
             paramsVr.getDistanceTrayToLens(),
             paramsVr.getDistanceScreenToLens(),
@@ -201,16 +178,6 @@ implements VRIDrawer {
         Renderer renderer = new Renderer();
         glView.setRenderer(renderer);
         glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        glView.setOnTouchListener(
-            (v, event) -> {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    // Signal a trigger event.
-                    glView.queueEvent(
-                        () -> nativeOnTriggerEvent(nativeApp));
-                    return true;
-                }
-                return false;
-            });
 
         // TODO(b/139010241): Avoid that action and status bar are displayed when pressing settings
         // button.
@@ -298,8 +265,6 @@ implements VRIDrawer {
             GLES30.glEnable(
                 GLES30.GL_DEPTH_TEST
             );
-
-            nativeOnSurfaceCreated(nativeApp);
         }
 
         @Override
@@ -381,7 +346,6 @@ implements VRIDrawer {
     }
 
     private native long nativeOnCreate(
-        AssetManager assetManager,
         float interLensDistance,
         float trayToLensDistance,
         float screenToLensDistance,
@@ -390,15 +354,18 @@ implements VRIDrawer {
         VRIDrawer drawer
     );
 
-    private native void getPose(long nativeApp, float[] modelMatrix, int indexEye);
+    private native void getPose(
+        long nativeApp,
+        float[] modelMatrix,
+        int indexEye,
+        float positionX,
+        float positionY,
+        float positionZ
+    );
 
     private native void nativeOnDestroy(long nativeApp);
 
-    private native void nativeOnSurfaceCreated(long nativeApp);
-
     private native void nativeOnDrawFrame(long nativeApp);
-
-    private native void nativeOnTriggerEvent(long nativeApp);
 
     private native void nativeOnPause(long nativeApp);
 
