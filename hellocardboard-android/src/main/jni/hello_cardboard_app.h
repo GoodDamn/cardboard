@@ -104,6 +104,12 @@ class HelloCardboardApp {
    */
   void OnResume();
 
+  void getPose(
+      JNIEnv* env,
+      jfloatArray model_matrix,
+      jint index_eye
+  );
+
   /**
    * Allows user to switch viewer.
    */
@@ -144,10 +150,6 @@ class HelloCardboardApp {
    */
   Matrix4x4 GetPose();
 
-  void calculateDrawMatrices(
-      CardboardMesh* mesh
-  );
-
   /**
    * Finds a new random position for the target object.
    */
@@ -161,9 +163,6 @@ class HelloCardboardApp {
    * @return true if the user is pointing at the target object.
    */
   bool IsPointingAtTarget();
-
-  jobject java_asset_mgr_;
-  AAssetManager* asset_mgr_;
 
   CardboardHeadTracker* head_tracker_;
   CardboardLensDistortion* lens_distortion_;
@@ -187,14 +186,14 @@ class HelloCardboardApp {
   //GLuint obj_uv_param_;
   //GLuint obj_modelview_projection_param_;
 
-  Matrix4x4 head_view_;
+  Matrix4x4 matrixPose;
   Matrix4x4 model_target_;
 
-  Matrix4x4 modelview_projection_target_;
-  Matrix4x4 modelview_projection_room_;
+  //Matrix4x4 modelview_projection_target_;
+  //Matrix4x4 modelview_projection_room_;
 
-  TexturedMesh room_;
-  Texture room_tex_;
+  //TexturedMesh room_;
+  //Texture room_tex_;
 
   std::vector<TexturedMesh> target_object_meshes_;
   std::vector<Texture> target_object_not_selected_textures_;

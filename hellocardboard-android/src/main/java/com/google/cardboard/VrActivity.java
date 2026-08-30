@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
@@ -36,10 +37,16 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import good.damn.sdk2.matrix.SDKMatrix4x4;
 import good.damn.sdk2.models.SDKMParamsDevice;
 
 import com.google.cardboard.misc.VRProviderParams;
+import com.google.cardboard.opengl.VRGLMeshTextured;
+import com.google.cardboard.opengl.VRGLProgramObj;
+import com.google.cardboard.opengl.VRGLTexture;
 import com.google.cardboard.renderer.api.VRIDrawer;
+
+import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -76,15 +83,82 @@ implements VRIDrawer {
     private float mDpiX = 0f;
     private float mDpiY = 0f;
 
+    @NonNull
+    private final VRGLProgramObj mProgramObj = new VRGLProgramObj();
+
+    @NonNull
+    private final VRGLMeshTextured meshRoom = new VRGLMeshTextured();
+
+    @NonNull
+    private final VRGLTexture mTextureRoom = new VRGLTexture();
+
+    @NonNull
+    private final SDKMatrix4x4 matrixPosition = new SDKMatrix4x4();
+
+    @NonNull
+    private final float[] matrixRaw = new float[16];
+
     @Override
-    public void onDraw() {
-        Log.d(TAG, "onDraw: SOME_DRAW");
+    public void onDraw(
+        int indexEye
+    ) {
+        matrixPosition.toArray(
+            matrixRaw
+        );
+
+        mProgramObj.use();
+
+        getPose(
+            nativeApp,
+            matrixRaw,
+            indexEye
+        );
+
+        Log.d(TAG, "onDraw: " + indexEye + " matrixRaw: " + Arrays.toString(matrixRaw));
+
+        GLES30.glUniformMatrix4fv(
+            mProgramObj.getUniformMVP(),
+            1,
+            false,
+            matrixRaw,
+            0
+        );
+        mTextureRoom.bind();
+        meshRoom.draw();
+
+        /*glUseProgram(obj_program_);
+
+        std::array<float, 16> room_array = modelview_projection_room_.ToGlArray();
+        glUniformMatrix4fv(obj_modelview_projection_param_, 1, GL_FALSE,
+            room_array.data());
+
+        room_tex_.Bind();
+        room_.Draw();*/
+
+
+        ///////////////////////////////
+        /*glUseProgram(obj_program_);
+
+        std::array<float, 16> target_array = modelview_projection_target_.ToGlArray();
+        glUniformMatrix4fv(obj_modelview_projection_param_, 1, GL_FALSE,
+            target_array.data());
+
+        if (IsPointingAtTarget()) {
+            target_object_selected_textures_[cur_target_object_].Bind();
+        } else {
+            target_object_not_selected_textures_[cur_target_object_].Bind();
+        }
+        target_object_meshes_[cur_target_object_].Draw();*/
     }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onCreate(Bundle savedInstance) {
         super.onCreate(savedInstance);
+
+        SDKMatrix4x4.writeIdentity(
+            matrixPosition
+        );
 
         @NonNull
         SDKMParamsDevice paramsVr = null;
@@ -200,6 +274,31 @@ implements VRIDrawer {
     private class Renderer implements GLSurfaceView.Renderer {
         @Override
         public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
+            mProgramObj.create();
+            Log.d(TAG, "onSurfaceCreated: GL_ERROR: " + GLES30.glGetError());
+
+            @NonNull
+            final AssetManager assets = getAssets();
+
+            meshRoom.initialize(
+                mProgramObj.getAttrPosition(),
+                mProgramObj.getAttrUv(),
+                "CubeRoom.obj",
+                assets
+            );
+            Log.d(TAG, "onSurfaceCreated: GL_ERROR2: " + GLES30.glGetError());
+
+            mTextureRoom.initialize(
+                assets,
+                "CubeRoom_BakedDiffuse.png"
+            );
+
+            Log.d(TAG, "onSurfaceCreated: GL_ERROR3: " + GLES30.glGetError());
+
+            GLES30.glEnable(
+                GLES30.GL_DEPTH_TEST
+            );
+
             nativeOnSurfaceCreated(nativeApp);
         }
 
@@ -290,6 +389,8 @@ implements VRIDrawer {
         float[] distortionCoeffs,
         VRIDrawer drawer
     );
+
+    private native void getPose(long nativeApp, float[] modelMatrix, int indexEye);
 
     private native void nativeOnDestroy(long nativeApp);
 

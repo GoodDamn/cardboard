@@ -82,6 +82,18 @@ public final class SDKMatrix4x4 {
 
     // @brief Copies into @p array the contents of `this` matrix.
     // @param[out] array A pointer to a float array of size 16.
+
+    public final void toArray(
+        @NonNull final float[] outMatrix16
+    ) {
+        int index = 0;
+        for (int j = 0; j < 4; ++j) {
+            for (int i = 0; i < 4; ++i) {
+                outMatrix16[index++] = m[i][j];
+            }
+        }
+    }
+
     public void toArray(
         @NonNull final float[][] outMatrix16
     ) {

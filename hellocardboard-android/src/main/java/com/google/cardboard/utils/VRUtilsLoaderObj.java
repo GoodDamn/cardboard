@@ -148,7 +148,6 @@ public final class VRUtilsLoaderObj {
                     while (tokenizer.hasMoreTokens()) {
                         @NonNull final String per_vertex_info = tokenizer.nextToken();
 
-                        Log.d(TAG, "loadObjFile: PER_VERTEX_INFO: " + per_vertex_info + ";;; PER_VERTEX_INFO_LIST: " + Arrays.toString(per_vertex_info_list));
                         switch (per_vertex_info_count) {
                             case 0:
                                 // Write to vertex indices.

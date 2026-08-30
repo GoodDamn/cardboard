@@ -116,3 +116,19 @@ JNI_METHOD(void, nativeSetScreenParams)
 }
 
 }  // extern "C"
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_google_cardboard_VrActivity_getPose(
+    JNIEnv *env,
+    jobject thiz,
+    jlong native_app,
+    jfloatArray model_matrix,
+    jint index_eye
+    ) {
+    native(native_app)->getPose(
+        env,
+        model_matrix,
+        index_eye
+    );
+}

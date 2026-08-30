@@ -73,7 +73,7 @@ public final class VRGLTexture {
         );
 
         GLES30.glBindTexture(
-            GLES30.GL_TEXTURE,
+            GLES30.GL_TEXTURE_2D,
             mDescriptor[0]
         );
     }
