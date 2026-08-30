@@ -364,17 +364,12 @@ namespace ndk_hello_cardboard {
                matrixPose *
                GetTranslationMatrix({0.0f, -1.7f, 0.0f});
 
-        int index = 0;
-        for (auto & i : b.m) {
-            env->SetFloatArrayRegion(
-                model_matrix,
-                index,
-                4,
-                i
-            );
-
-            index += 4;
-        }
+        env->SetFloatArrayRegion(
+            model_matrix,
+            0,
+            16,
+            b.m[0]
+        );
     }
 
     void HelloCardboardApp::OnResume() {
