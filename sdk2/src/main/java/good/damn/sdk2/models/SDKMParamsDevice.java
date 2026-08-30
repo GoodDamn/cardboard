@@ -1,8 +1,8 @@
-package com.google.cardboard.misc;
+package good.damn.sdk2.models;
 
 import androidx.annotation.NonNull;
 
-public final class VRMParams {
+public final class SDKMParamsDevice {
 
     private final float mDistanceInterLens;
     private final float mDistanceTrayToLens;
@@ -14,7 +14,7 @@ public final class VRMParams {
     @NonNull
     private final float[] mDistortionCoeffs;
 
-    public VRMParams(
+    public SDKMParamsDevice(
             final float distanceInterLens,
             final float distanceTrayToLens,
             final float distanceScreenToLens,

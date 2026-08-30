@@ -1,1 +1,2 @@
 include ':sdk', ':hellocardboard-android'
+include ':sdk2'

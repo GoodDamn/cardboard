@@ -17,19 +17,18 @@ package com.google.cardboard;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
+import android.hardware.SensorPrivacyManager;
 import android.net.Uri;
-import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.provider.Settings;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -37,101 +36,31 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import good.damn.sdk2.matrix.SDKMatrix4x4;
+import androidx.annotation.Nullable;
 import good.damn.sdk2.models.SDKMParamsDevice;
 
+import com.google.cardboard.listeners.VRListenerSensorGyroscope;
 import com.google.cardboard.misc.VRProviderParams;
-import com.google.cardboard.opengl.VRGLMeshTextured;
-import com.google.cardboard.opengl.VRGLProgramObj;
-import com.google.cardboard.opengl.VRGLTexture;
-import com.google.cardboard.renderer.api.VRIDrawer;
-
-import java.util.Arrays;
-
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
+import com.google.cardboard.renderer.VRRendererImpl;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-/**
- * A Google Cardboard VR NDK sample application.
- *
- * <p>This is the main Activity for the sample application. It initializes a GLSurfaceView to allow
- * rendering.
- */
-// TODO(b/184737638): Remove decorator once the AndroidX migration is completed.
-public class VrActivity
-extends AppCompatActivity
-implements VRIDrawer {
-    
-    static {
-        System.loadLibrary("cardboard_jni");
-    }
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
-    private static final String TAG = VrActivity.class.getSimpleName();
+public final class VRActivityMain
+extends AppCompatActivity {
+
+    private static final String TAG = VRActivityMain.class.getSimpleName();
 
     // Permission request codes
     private static final int PERMISSIONS_REQUEST_CODE = 2;
 
-    // Opaque native pointer to the native CardboardApp instance.
-    // This object is owned by the VrActivity instance and passed to the native methods.
-    private long nativeApp;
+    private final VRApplication mApplication = new VRApplication();
 
     private GLSurfaceView glView;
-
-    private float mDpiX = 0f;
-    private float mDpiY = 0f;
-
-    @NonNull
-    private final VRGLProgramObj mProgramObj = new VRGLProgramObj();
-
-    @NonNull
-    private final VRGLMeshTextured meshRoom = new VRGLMeshTextured();
-
-    @NonNull
-    private final VRGLTexture mTextureRoom = new VRGLTexture();
-
-    @NonNull
-    private final float[] matrixOut = new float[16];
-
-    private static final float RADIUS = 4f;
-
-    private long mPrevTime = System.currentTimeMillis();
-
-    private float mPath = 0.0f;
-
-    @Override
-    public void onDraw(
-        int indexEye
-    ) {
-        mProgramObj.use();
-
-        final long currentTime = System.currentTimeMillis();
-        long dt = currentTime - mPrevTime;
-        mPrevTime = currentTime;
-
-        mPath += dt * 0.0001f;
-
-        getPose(
-            nativeApp,
-            matrixOut,
-            indexEye,
-            (float) (Math.sin(mPath) * RADIUS),
-            -1.7f,
-            (float) (Math.cos(mPath) * RADIUS)
-        );
-
-        GLES30.glUniformMatrix4fv(
-            mProgramObj.getUniformMVP(),
-            1,
-            false,
-            matrixOut,
-            0
-        );
-        mTextureRoom.bind();
-        meshRoom.draw();
-    }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -157,26 +86,20 @@ implements VRIDrawer {
             );
         }
 
-        nativeApp = nativeOnCreate(
-            paramsVr.getDistanceInterLens(),
-            paramsVr.getDistanceTrayToLens(),
-            paramsVr.getDistanceScreenToLens(),
-            paramsVr.getFov(),
-            paramsVr.getDistortionCoeffs(),
-            this
+        mApplication.create(
+            getAssets(),
+            paramsVr
         );
-
-        @NonNull final DisplayMetrics metrics = getResources()
-            .getDisplayMetrics();
-
-        mDpiX = metrics.xdpi;
-        mDpiY = metrics.ydpi;
 
         setContentView(R.layout.activity_vr);
         glView = findViewById(R.id.surface_view);
-        glView.setEGLContextClientVersion(2);
-        Renderer renderer = new Renderer();
-        glView.setRenderer(renderer);
+        glView.setEGLContextClientVersion(3);
+        glView.setRenderer(
+            new VRRendererImpl(
+                mApplication,
+                getResources().getDisplayMetrics()
+            )
+        );
         glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
         // TODO(b/139010241): Avoid that action and status bar are displayed when pressing settings
@@ -197,12 +120,33 @@ implements VRIDrawer {
 
         // Prevents screen from dimming/locking.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        @NonNull
+        final SensorManager managerSensor = (SensorManager) getSystemService(
+            Context.SENSOR_SERVICE
+        );
+
+        @Nullable
+        final Sensor sensorGyroscope = managerSensor.getDefaultSensor(
+            Sensor.TYPE_GYROSCOPE
+        );
+
+        if (sensorGyroscope == null) {
+            return;
+        }
+
+        managerSensor.registerListener(
+            new VRListenerSensorGyroscope(),
+            sensorGyroscope,
+            SensorManager.SENSOR_DELAY_GAME
+        );
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        nativeOnPause(nativeApp);
+        mApplication.pause();
         glView.onPause();
     }
 
@@ -220,14 +164,13 @@ implements VRIDrawer {
         }
 
         glView.onResume();
-        nativeOnResume(nativeApp);
+        mApplication.resume();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        nativeOnDestroy(nativeApp);
-        nativeApp = 0;
+        mApplication.destroy();
     }
 
     @Override
@@ -235,46 +178,6 @@ implements VRIDrawer {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
             setImmersiveSticky();
-        }
-    }
-
-    private class Renderer implements GLSurfaceView.Renderer {
-        @Override
-        public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-            mProgramObj.create();
-            Log.d(TAG, "onSurfaceCreated: GL_ERROR: " + GLES30.glGetError());
-
-            @NonNull
-            final AssetManager assets = getAssets();
-
-            meshRoom.initialize(
-                mProgramObj.getAttrPosition(),
-                mProgramObj.getAttrUv(),
-                "CubeRoom.obj",
-                assets
-            );
-            Log.d(TAG, "onSurfaceCreated: GL_ERROR2: " + GLES30.glGetError());
-
-            mTextureRoom.initialize(
-                assets,
-                "CubeRoom_BakedDiffuse.png"
-            );
-
-            Log.d(TAG, "onSurfaceCreated: GL_ERROR3: " + GLES30.glGetError());
-
-            GLES30.glEnable(
-                GLES30.GL_DEPTH_TEST
-            );
-        }
-
-        @Override
-        public void onSurfaceChanged(GL10 gl10, int width, int height) {
-            nativeSetScreenParams(nativeApp, width, height, mDpiX, mDpiY);
-        }
-
-        @Override
-        public void onDrawFrame(GL10 gl10) {
-            nativeOnDrawFrame(nativeApp);
         }
     }
 
@@ -344,38 +247,4 @@ implements VRIDrawer {
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
-
-    private native long nativeOnCreate(
-        float interLensDistance,
-        float trayToLensDistance,
-        float screenToLensDistance,
-        float[] fovHalfDegrees,
-        float[] distortionCoeffs,
-        VRIDrawer drawer
-    );
-
-    private native void getPose(
-        long nativeApp,
-        float[] modelMatrix,
-        int indexEye,
-        float positionX,
-        float positionY,
-        float positionZ
-    );
-
-    private native void nativeOnDestroy(long nativeApp);
-
-    private native void nativeOnDrawFrame(long nativeApp);
-
-    private native void nativeOnPause(long nativeApp);
-
-    private native void nativeOnResume(long nativeApp);
-
-    private native void nativeSetScreenParams(
-        long nativeApp,
-        int width,
-        int height,
-        float xdpi,
-        float ydpi
-    );
 }

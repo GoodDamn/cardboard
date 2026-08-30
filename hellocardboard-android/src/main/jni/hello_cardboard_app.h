@@ -51,22 +51,14 @@ class HelloCardboardApp {
   HelloCardboardApp(
       JavaVM* vm,
       jobject obj,
-      jobject asset_mgr_obj,
       jfloat interLensDistance,
       jfloat trayToLensDistance,
       jfloat screenToLensDistance,
       jfloatArray fovHalfDegrees,
-      jfloatArray distortionCoeffs);
+      jfloatArray distortionCoeffs,
+      jobject instanceDrawer);
 
   ~HelloCardboardApp();
-
-  /**
-   * Initializes any GL-related objects. This should be called on the rendering
-   * thread with a valid GL context.
-   *
-   * @param env The JNI environment.
-   */
-  void OnSurfaceCreated(JNIEnv* env);
 
   /**
    * Sets screen parameters.
@@ -84,12 +76,9 @@ class HelloCardboardApp {
   /**
    * Draws the scene. This should be called on the rendering thread.
    */
-  void OnDrawFrame();
-
-  /**
-   * Hides the target object if it's being targeted.
-   */
-  void OnTriggerEvent();
+  void OnDrawFrame(
+      JNIEnv* env
+  );
 
   /**
    * Pauses head tracking.
@@ -100,6 +89,15 @@ class HelloCardboardApp {
    * Resumes head tracking.
    */
   void OnResume();
+
+  void getPose(
+      JNIEnv* env,
+      jfloatArray matrixOut,
+      jint index_eye,
+      jfloat positionX,
+      jfloat positionY,
+      jfloat positionZ
+  );
 
   /**
    * Allows user to switch viewer.
@@ -141,42 +139,6 @@ class HelloCardboardApp {
    */
   Matrix4x4 GetPose();
 
-  /**
-   * Draws all world-space objects for the given eye.
-   */
-  void DrawWorld();
-
-  void calculateDrawMatrices(
-      CardboardMesh* mesh
-  );
-
-  /**
-   * Draws the target object.
-   */
-  void DrawTarget();
-
-  /**
-   * Draws the room.
-   */
-  void DrawRoom();
-
-  /**
-   * Finds a new random position for the target object.
-   */
-  void HideTarget();
-
-  /**
-   * Checks if user is pointing or looking at the target object by calculating
-   * whether the angle between the user's gaze and the vector pointing towards
-   * the object is lower than some threshold.
-   *
-   * @return true if the user is pointing at the target object.
-   */
-  bool IsPointingAtTarget();
-
-  jobject java_asset_mgr_;
-  AAssetManager* asset_mgr_;
-
   CardboardHeadTracker* head_tracker_;
   CardboardLensDistortion* lens_distortion_;
   CardboardDistortionRenderer* distortion_renderer_;
@@ -192,24 +154,9 @@ class HelloCardboardApp {
   GLuint framebuffer_;        // framebuffer object
   GLuint texture_;            // distortion texture
 
-  GLuint obj_program_;
-  GLuint obj_position_param_;
-  GLuint obj_uv_param_;
-  GLuint obj_modelview_projection_param_;
+  jobject instanceDrawer_;
 
-  Matrix4x4 head_view_;
-  Matrix4x4 model_target_;
-
-  Matrix4x4 modelview_projection_target_;
-  Matrix4x4 modelview_projection_room_;
-
-  TexturedMesh room_;
-  Texture room_tex_;
-
-  std::vector<TexturedMesh> target_object_meshes_;
-  std::vector<Texture> target_object_not_selected_textures_;
-  std::vector<Texture> target_object_selected_textures_;
-  int cur_target_object_;
+  Matrix4x4 matrixPose;
 };
 
 }  // namespace ndk_hello_cardboard
