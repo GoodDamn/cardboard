@@ -289,10 +289,13 @@ namespace ndk_hello_cardboard {
             mesh->projection_matrix
         );
 
+        Matrix4x4 viewMatrix = eye_matrix *
+            matrixPose *
+            GetTranslationMatrix({positionX, positionY, positionZ});
+
         Matrix4x4 b = projection_matrix *
-               eye_matrix *
-               matrixPose *
-               GetTranslationMatrix({positionX, positionY, positionZ});
+            viewMatrix *
+            GetTranslationMatrix({2.0f, -1.7f, 0.0f});
 
         env->SetFloatArrayRegion(
             matrixOut,
